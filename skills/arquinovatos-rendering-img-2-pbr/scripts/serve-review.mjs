@@ -18,7 +18,7 @@ function revealFile(file){return new Promise((resolve,reject)=>{const {command,a
 export async function createReviewServer({htmlPath,manifestPath,port=0,revealer=revealFile}){
   const html=fs.readFileSync(htmlPath,'utf8'),manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
   if(!manifest.files||typeof manifest.files!=='object')throw Error('El manifiesto de archivos no es válido.');
-  const files=Object.create(null);for(const [key,value] of Object.entries(manifest.files)){if(typeof value!=='string'||!path.isAbsolute(value))throw Error('El manifiesto necesita rutas locales absolutas.');files[key]=fs.realpathSync(value);}
+  const files=Object.create(null);for(const [key,value] of Object.entries(manifest.files)){if(typeof value!=='string'||!value)throw Error('El manifiesto necesita rutas de archivos.');files[key]=fs.realpathSync(path.resolve(path.dirname(manifestPath),value));}
   const token=crypto.randomBytes(32).toString('hex');let origin;
   const server=http.createServer(async(req,res)=>{
     res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Cross-Origin-Resource-Policy','same-origin');

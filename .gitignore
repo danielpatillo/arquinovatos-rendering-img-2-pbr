@@ -25,3 +25,5 @@ __pycache__/
 Thumbs.db
 node_modules/
 *.tar.gz
+!skills/arquinovatos-rendering-img-2-pbr/assets/review/logo-dark.png
+!skills/arquinovatos-rendering-img-2-pbr/assets/review/logo-light.png

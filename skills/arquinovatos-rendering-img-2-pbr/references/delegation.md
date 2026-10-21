@@ -2,7 +2,7 @@
 
 ## Encargo por mapa
 
-Cada mapa debe generarlo un subagente con el generador integrado. Incluye en su tarea:
+Cada uno de los seis mapas base debe generarlo un subagente con el generador integrado. Incluye en su tarea:
 
 ```text
 Genera únicamente [mapa] para [caso y material].
@@ -32,9 +32,11 @@ El generador puede guardar primero en su carpeta administrada. Copia después el
 
 Respeta concurrencia de agentes y del servicio. No generes seis mapas en una sola llamada ni un mosaico. Reutiliza agentes inactivos cuando la sesión limite el número total de agentes. La tarea de cada nuevo mapa debe volver a especificar las dos imágenes y su destino.
 
+El agente de Normal entrega además `Material_Normal_GL.png` ejecutando el conversor incluido sobre el DX aceptado. Es una conversión determinista de datos, G = 255 − G, sin otra llamada de IA. Si el DX se corrige, reconvierte el GL. El prompt registrado corresponde al DX; la variante OpenGL se identifica como derivada.
+
 ## Criterios de revisión
 
-- **Integridad:** seis PNG legibles, distintos y correspondientes a sus mapas; nunca placeholders, prompts escritos, duplicados o vistas de material.
+- **Integridad:** siete PNG legibles: seis tipos de mapa y dos convenciones del mismo Normal; nunca placeholders, prompts escritos o renders. GL conserva R/B del DX e invierte únicamente G.
 - **Referencias:** los derivados recibieron el mismo albedo y foto. Verifica la llamada o evidencia disponible; el resumen de un agente no demuestra por sí solo que adjuntó imágenes.
 - **Dimensiones:** cuadradas y comunes. Corrige el mapa divergente. Si solo puedes igualar tamaños por remuestreo, informa resolución nativa y remuestreada sin afirmar detalle nuevo. No cambies el maestro a mitad del trabajo.
 - **Registro:** juntas, bordes y vetas coinciden con el maestro. Revisa detalles identificables; misma resolución no implica mismo diseño.

@@ -4,6 +4,9 @@
   let current=0,imageIndex=0,imageList=[],menuIndex=0,promptText='';
   if(!Array.isArray(cases)||!cases.length){$('case-name').textContent='No se pudo cargar la galería. Recarga esta página.';return;}
   const tester=window.createMaterialTester();
+  const themeButton=$('theme-toggle');
+  function reflectTheme(){const dark=document.documentElement.dataset.theme==='dark';themeButton.textContent=dark?'Tema claro':'Tema oscuro';themeButton.setAttribute('aria-label',dark?'Cambiar a tema claro':'Cambiar a tema oscuro');}
+  reflectTheme();themeButton.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;try{localStorage.setItem('arquinovatos-pbr-theme',next);}catch{}reflectTheme();document.dispatchEvent(new Event('pbr-theme'));});
   for(const item of cases){const option=document.createElement('option');option.value=item.id;option.textContent=item.name;picker.append(option);}
   if(cases.length===1){picker.closest('nav').hidden=true;$('counter').hidden=true;}
   function watchError(img){img.addEventListener('error',()=>{img.alt='No se pudo cargar esta imagen. Abre el archivo o recarga la página.';img.classList.add('load-error');},{once:true});}
@@ -34,7 +37,7 @@
   function showPrompt(index){
     menu.hidden=true;const map=imageList[index],info=typeof map.prompt==='string'?{text:map.prompt,exact:false}:map.prompt||{};promptText=info.text||'';
     $('prompt-title').textContent=`Prompt: ${map.label}`;$('prompt-text').value=promptText||'No se registró el texto efectivo de esta llamada. No se ha sustituido por una plantilla.';
-    $('prompt-provenance').textContent=promptText?(info.exact?'Texto efectivo registrado para este mapa.':'Texto recuperado; el literal exacto no está confirmado.'):'Prompt no disponible en el registro de esta ejecución.';
+    $('prompt-provenance').textContent=info.derived_from?'OpenGL se obtiene del Normal DX invirtiendo solo G (255 − G). El siguiente prompt generó el DX; no hubo otra llamada de IA.':promptText?(info.exact?'Texto efectivo registrado para este mapa.':'Texto recuperado; el literal exacto no está confirmado.'):'Prompt no disponible en el registro de esta ejecución.';
     $('prompt-references').textContent=info.reference_roles?.length?'Imágenes a adjuntar, en orden: '+info.reference_roles.join(' | '):map.filename==='Material_BaseColor.png'?'Para reutilizarlo, adjunta la foto o el recorte del material.':'Para reutilizarlo, adjunta primero el albedo maestro y después la foto o el recorte del material.';
     $('copy-prompt').disabled=!promptText;$('copy-status').textContent='';promptViewer.showModal();
   }

@@ -1,4 +1,4 @@
 interface:
   display_name: "Arquinovatos - Rendering IMG 2 PBR"
-  short_description: "Crea seis mapas PBR y un visor HTML con esfera"
-  default_prompt: "Usa $arquinovatos-rendering-img-2-pbr para crear seis mapas PBR y el visor HTML del material que señalo en esta fotografía."
+  short_description: "Crea mapas PBR con Normal DX/GL y visor 3D"
+  default_prompt: "Usa $arquinovatos-rendering-img-2-pbr para crear los seis tipos de mapas PBR, Normal DX y OpenGL, y abrir el visor HTML Arquinovatos del material que señalo en esta fotografía."

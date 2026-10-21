@@ -2,20 +2,20 @@
 name: arquinovatos-rendering-img-2-pbr
 description: >-
   Convierte una fotografía y un material señalado en seis mapas PBR y un visor HTML
-  con esfera, controles por mapa y prompts copiables. Usa el generador integrado
+  con esfera, cubo redondeado, plano infinito, controles y prompts copiables. Usa el generador integrado
   de Codex y subagentes: albedo primero y cinco derivados en paralelo.
   Para superficies opacas no metálicas.
 ---
 
 # Arquinovatos - Rendering IMG 2 PBR
 
-Recibe **una fotografía** como único archivo de entrada y entrega **seis mapas PBR y un visor HTML interactivo**. El usuario puede identificar el material en el mismo mensaje. Cada mapa se genera mediante un subagente; el coordinador selecciona, prepara referencias y revisa.
+Recibe **una fotografía** como único archivo de entrada y entrega **seis tipos de mapas PBR y el visor HTML Arquinovatos**. Son siete PNG: el Normal se entrega en DX y OpenGL. El usuario puede identificar el material en el mismo mensaje. Los seis mapas base se generan mediante subagentes; OpenGL se deriva exactamente del DX mediante código.
 
 ## Capacidades necesarias
 
 Comprueba visión, generador de imágenes **integrado de Codex**, subagentes que tengan ese generador y acceso a los archivos. Usa las herramientas y firmas reales de la sesión, que pueden variar entre clientes. Si falta una capacidad, explica cuál falta y detén la generación. No sustituyas el flujo por APIs, otro proveedor, imágenes de stock, código que dibuje texturas ni ejecución sin subagentes. No solicites claves API ni cambies configuraciones globales. Instalar la skill no habilita capacidades ausentes.
 
-Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coordinador salvo indicación expresa del usuario. Para construir el visor usa Node.js disponible en la sesión, incluido el runtime de Codex cuando exista; los scripts no necesitan instalar paquetes. El navegador necesita WebGL para la esfera. Si no puedes construir o comprobar el visor, conserva los mapas e informa la limitación concreta.
+Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coordinador salvo indicación expresa del usuario. Para construir el visor usa Node.js 18+ disponible en la sesión, incluido el runtime de Codex cuando exista; no necesita paquetes npm. Si falta y el encargo autoriza preparar requisitos, descarga un runtime portátil desde nodejs.org al espacio de trabajo y verifica su checksum oficial, sin cambiar PATH ni instalaciones globales. Si no es posible, conserva los mapas e informa la limitación. El navegador necesita WebGL. Las herramientas integradas de imágenes y subagentes dependen del cliente y no se pueden añadir descargando esta skill.
 
 ## 1. Identificar el material
 
@@ -64,6 +64,7 @@ Cada agente lee y ejecuta el prompt correspondiente:
 | --- | --- | --- |
 | Albedo / Base Color | [01-albedo.md](references/01-albedo.md) | `Material_BaseColor.png` |
 | Normal DirectX / Y− | [02-normal-dx.md](references/02-normal-dx.md) | `Material_Normal_DX.png` |
+| Normal OpenGL / Y+ | Conversión exacta del DX con `scripts/normal-opengl.mjs` | `Material_Normal_GL.png` |
 | Roughness | [03-roughness.md](references/03-roughness.md) | `Material_Roughness.png` |
 | Ambient Occlusion | [04-ao.md](references/04-ao.md) | `Material_AO.png` |
 | Specular escalar UE | [05-specular-ue.md](references/05-specular-ue.md) | `Material_Specular_UE.png` |
@@ -73,9 +74,11 @@ Asigna destinos exclusivos. Ningún agente modifica el albedo u otros mapas. El 
 
 Cada agente registra **el texto efectivo pasado al generador**, no solo el archivo de plantilla. Reúne en `work/prompts.json` una entrada por nombre final, con `text` y `exact: true` cuando proceda. Si una corrección produce el mapa retenido, su prompt es el que corresponde al final; conserva los intentos anteriores separados. Registra también las dos referencias y sus roles. No reconstruyas un prompt perdido y lo presentes como literal: el visor admite indicar que no está disponible.
 
+Después de aceptar el Normal DX, el agente responsable o el coordinador ejecuta `node <skill>/scripts/normal-opengl.mjs --input <resultado>/maps/Material_Normal_DX.png --output <resultado>/maps/Material_Normal_GL.png`. Invierte únicamente G = 255 − G; conserva R, B, dimensiones y 8 bits. No usa otra generación de IA ni aplica contraste, gamma o renormalización a los archivos. Si cambia el DX, vuelve a obtener su GL. El visor identifica el GL como derivado y muestra el prompt real del DX, sin inventar otra llamada.
+
 ## 5. Revisar y entregar
 
-Inspecciona los seis archivos reales: mapa correcto, proporción cuadrada, mismas dimensiones y orientación. La igualdad de tamaño no demuestra alineación: compara posiciones de juntas, vetas, bordes y poros. Revisa continuidad de bordes en ambos ejes y esquinas, preferentemente con repetición 3 × 3 y desplazamiento de media imagen cuando haya herramientas. Conserva esos diagnósticos fuera de `maps/`.
+Inspecciona los seis mapas base y comprueba la conversión del séptimo PNG OpenGL: mapa correcto, proporción cuadrada, mismas dimensiones y orientación. La igualdad de tamaño no demuestra alineación: compara posiciones de juntas, vetas, bordes y poros. Revisa continuidad de bordes en ambos ejes y esquinas, preferentemente con repetición 3 × 3 y desplazamiento de media imagen cuando haya herramientas. Conserva esos diagnósticos fuera de `maps/`.
 
 Albedo lleva color intrínseco; su luminancia no equivale a Height, Roughness, AO ni Specular. Pigmentos oscuros no son automáticamente cavidades. Normal debe representar vectores DirectX coherentes, no solo una ilustración violeta. Specular usa `F0 = 0.08 × S`, no glossiness ni Metallic. Aplica los criterios de [delegation.md](references/delegation.md).
 
@@ -83,12 +86,12 @@ Pide RGB para Albedo y Normal y monocanal para los cuatro escalares, todos PNG a
 
 Ante un defecto concreto, pide **una corrección dirigida al agente responsable**, conservando ambas referencias. No rehagas mapas válidos. Si sigue sin resolverse o una herramienta falla de forma persistente, conserva el trabajo e informa qué falta; no hagas reintentos indefinidos ni declares completo un conjunto incompleto.
 
-Mantén **exactamente seis mapas finales en `maps/`**, enlazados o en un ZIP que contenga solo esos seis PNG. Entrega además el visor y su acompañante local conforme al siguiente apartado. Selecciones, recortes, diagnósticos y variantes son intermediarios. Informa dimensiones, bits, canales reales y límites observados. Distingue comprobación técnica, revisión visual y propiedades no verificadas; no afirmes un bake, exactitud física, alineación perfecta o pruebas de render que no realizaste. Son estimaciones artísticas a partir de una fotografía.
+Mantén **siete PNG finales en `maps/`: seis tipos y ambas convenciones de Normal**, enlazados o en un ZIP con esos siete archivos. Entrega siempre el visor y su acompañante local conforme al siguiente apartado, sin esperar otra petición. Selecciones, recortes y diagnósticos son intermediarios. Informa dimensiones, bits, canales reales y límites observados. Distingue comprobación técnica, revisión visual y propiedades no verificadas; no afirmes un bake, exactitud física, alineación perfecta o pruebas de render que no realizaste. Son estimaciones artísticas a partir de una fotografía.
 
 ## 6. Construir el visor de cada resultado
 
-Lee [references/review.md](references/review.md) y usa la plantilla y el constructor incluidos. Produce `Material_PBR.html` con la foto y los seis PNG incrustados sin modificar sus bytes. Incluye la esfera en tiempo real, intensidad independiente de los seis mapas, contrastes de roughness y specular, galería, menú contextual y prompt copiable por mapa. No sustituyas un render real por una esfera dibujada con CSS o una imagen fija.
+Lee [references/review.md](references/review.md) y usa siempre la plantilla y el constructor incluidos, sin rediseñar o regenerar la interfaz para cada material. Produce `Material_PBR.html` con la foto, siete PNG y los dos logos Arquinovatos incrustados sin modificar sus bytes. El mismo visor incluye esfera, cubo con bordes redondeados y plano infinito, tiling UV, inversión Y del Normal, intensidades por mapa, contrastes de roughness/specular, temas claro/oscuro, galería, menú contextual y prompts copiables. No sustituyas el render real por una imagen fija.
 
-El constructor también crea `Iniciar_visor.mjs` y `review-files.json`. El HTML funciona sin servidor para revisar y ajustar. Para **abrir ubicación del archivo**, inicia el acompañante local en la misma computadora y abre su URL con las herramientas disponibles. Usa únicamente los archivos de esta ejecución; el acompañante no ofrece acceso general al disco. En un enlace remoto o en el celular esa acción debe explicarse como local, no fingirse. Los controles solo cambian la vista previa, no los PNG finales.
+El constructor también crea `Iniciar_visor.mjs`, `review-files.json` y una copia exacta `Foto_referencia.ext`. El manifiesto usa rutas relativas: conserva la carpeta completa con `maps/` al moverla. El HTML funciona solo para revisar y ajustar. Inicia el acompañante en una sesión retenida y abre su URL en la misma computadora para habilitar **Abrir ubicación del archivo**. Usa únicamente los archivos de esta ejecución; el acompañante no ofrece acceso general al disco. En un enlace remoto o en el celular esa acción debe explicarse como local. Los controles solo cambian la vista previa, no los PNG finales.
 
 Generar mapas no autoriza publicar fotos ni resultados. Mantén referencias y ejecuciones fuera del paquete público de la skill.

@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#164f66">
   <meta name="description" content="Fotografía, mapas PBR, prompts y probador de materiales en tiempo real.">
   <title>Arquinovatos · Foto a PBR</title>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('arquinovatos-pbr-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch{document.documentElement.dataset.theme='dark';}</script>
   <link rel="stylesheet" href="styles.css">
   <script src="cases.js" defer></script>
   <script src="pbr-math.js" defer></script>
@@ -14,13 +15,13 @@
 </head>
 <body>
   <header class="masthead">
-    <div class="brand">Arquinovatos</div>
-    <span>Rendering IMG 2 PBR</span>
+    <div class="brand" role="img" aria-label="Arquinovatos"><img class="logo-dark" src="logo-dark.png" width="3440" height="1440" alt=""><img class="logo-light" src="logo-light.png" width="3440" height="1440" alt=""></div>
+    <span>Materiales desde una fotografía</span><button id="theme-toggle" type="button">Cambiar tema</button>
   </header>
   <main>
     <div class="intro">
-      <h1>De foto a material</h1>
-      <p>Revisa el original y los seis mapas de cada prueba. Toca cualquier imagen para ampliarla.</p>
+      <h1>Rendering IMG 2 PBR</h1>
+      <p>Explora el material, ajusta su respuesta y compara cada mapa con la fotografía original.</p>
     </div>
     <nav class="case-picker" aria-label="Elegir prueba">
       <label for="material">Material</label>
@@ -36,12 +37,12 @@
         <span id="counter" aria-live="polite"></span>
       </div>
       <section class="material-tester" aria-labelledby="tester-title">
-        <div class="tester-heading"><h3 id="tester-title">Probador en esfera</h3><button id="reset-material" type="button">Restablecer</button></div>
+        <div class="tester-heading"><h3 id="tester-title">Vista del material</h3><button id="reset-material" type="button">Restablecer</button></div>
         <div class="tester-layout">
-          <div class="sphere-stage"><canvas id="material-sphere" tabindex="0" role="img" aria-label="Esfera del material. Arrastra o usa las flechas para girar."></canvas><label class="motion-control"><input type="checkbox" id="rotate-material"> Giro automático</label><p id="sphere-status" role="status" aria-live="polite">Preparando el probador…</p></div>
-          <div id="map-controls" class="map-controls"></div>
+          <div class="sphere-stage"><canvas id="material-sphere" tabindex="0" role="img" aria-label="Vista 3D del material. Arrastra o usa las flechas para girar."></canvas><div class="stage-footer"><label class="motion-control"><input type="checkbox" id="rotate-material"> Giro automático</label><p id="sphere-status" role="status" aria-live="polite">Preparando el probador…</p></div></div>
+          <div class="control-panel"><div class="shape-field"><label for="preview-shape">Forma de prueba</label><select id="preview-shape"><option value="sphere">Esfera</option><option value="rounded-cube">Cubo con bordes redondeados</option><option value="plane">Plano infinito</option></select></div><div id="map-controls" class="map-controls"></div><label class="motion-control normal-inversion"><input type="checkbox" id="invert-normal"> Invertir Y del Normal</label><p class="control-hint">Prueba la orientación del relieve. Se incluyen archivos Normal DX y OpenGL.</p></div>
         </div>
-        <p class="preview-note">Los ajustes afectan a la vista previa. Los PNG originales se conservan. Iluminación de estudio orientativa; altura relativa sin escala física calibrada.</p>
+        <p class="preview-note">Los ajustes cambian la vista previa. Los archivos se conservan. Iluminación de estudio y altura relativa.</p>
       </section>
       <div class="comparison">
         <aside class="reference">
@@ -54,7 +55,7 @@
           <div class="reference-actions"><button id="original-actions" type="button">Acciones del original</button><a id="pin" target="_blank" rel="noopener noreferrer">Ver fuente</a></div>
         </aside>
         <div class="outputs">
-          <div class="outputs-heading"><h3>Seis mapas generados</h3><span id="map-dimensions"></span></div>
+          <div class="outputs-heading"><h3>Mapas del material</h3><span id="map-dimensions"></span></div>
           <div class="map-grid" id="maps"></div>
         </div>
       </div>

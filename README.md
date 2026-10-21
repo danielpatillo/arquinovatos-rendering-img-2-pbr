@@ -1,6 +1,6 @@
 # Arquinovatos - Rendering IMG 2 PBR
 
-Una fotografía de un material → seis mapas PBR, sus prompts y un visor HTML con esfera en tiempo real.
+Una fotografía → seis tipos de mapas PBR, Normal DX/OpenGL, prompts y el visor 3D Arquinovatos. Son siete PNG y un HTML que se entrega siempre con el material.
 
 Estado experimental: las pruebas iniciales detectaron costuras y diferencias
 entre la apariencia de un mapa y los datos que debería representar. La skill
@@ -11,18 +11,20 @@ informa esos límites; cada conjunto necesita revisión antes de usarlo en produ
 - Codex con visión, generación de imágenes integrada y subagentes. Los subagentes también necesitan acceso al generador y a las referencias.
 - Un espacio de trabajo donde guardar los archivos.
 - Una foto y una indicación del material si aparecen varias superficies.
-- Node.js 18 o superior para que Codex construya el HTML y abra el acompañante local; no necesita paquetes npm. Codex puede usar su runtime incluido cuando esté disponible.
+- Node.js 18 o superior para construir el HTML y abrir el acompañante local; no necesita paquetes npm. Codex puede usar su runtime incluido o preparar uno portátil desde la fuente oficial cuando lo autorices en el encargo.
 - Un navegador con WebGL para el probador. El HTML terminado funciona sin Internet.
 
 No requiere claves API adicionales. Instalar instrucciones no añade herramientas: si falta una capacidad, la skill lo explica y se detiene.
 
 ## Instalar
 
-En Codex pide:
+Adjunta la fotografía, cambia `[material y zona]` por tu objetivo y pega **un solo prompt**:
 
 ```text
-Usa $skill-installer para instalar esta habilidad desde GitHub:
+Instala o actualiza esta habilidad desde GitHub y lee su SKILL.md para usarla ahora en esta misma conversación:
 https://github.com/danielpatillo/arquinovatos-rendering-img-2-pbr/tree/main/skills/arquinovatos-rendering-img-2-pbr
+Con la foto adjunta crea el material de [material y zona].
+Prepara los requisitos locales necesarios. Entrega los seis tipos de mapas con Normal DX y OpenGL, genera el visor Arquinovatos completo y ábrelo localmente.
 ```
 
 O descarga el ZIP del repositorio y copia la carpeta completa
@@ -31,7 +33,7 @@ La ubicación de usuario documentada actualmente es `~/.agents/skills/` en
 macOS/Linux y `%USERPROFILE%\.agents\skills\` en Windows. Respeta la ubicación
 configurada por tu instalación de Codex y reinícialo si todavía no aparece.
 
-Para tus seguidores basta compartir ese enlace de GitHub y el texto anterior.
+Para tus seguidores basta compartir ese enlace de GitHub y el prompt anterior.
 La instalación descarga las instrucciones, scripts y plantilla; las capacidades
 de imágenes y subagentes dependen de su Codex. No instala PBR Studio ni requiere
 claves API. Las actualizaciones se instalan pidiéndole a Codex que actualice
@@ -44,7 +46,6 @@ Adjunta una sola foto y escribe, por ejemplo:
 ```text
 Usa $arquinovatos-rendering-img-2-pbr.
 Quiero el material de la fachaleta de piedra de la pared izquierda.
-Entrega los seis mapas, el HTML con probador y abre el visor local.
 ```
 
 Si no indicas el material, pregunta cuál quieres y, cuando sea posible, muestra
@@ -60,6 +61,7 @@ el mismo albedo y la misma foto o su recorte fiel.
 | --- | --- |
 | `Material_BaseColor.png` | Albedo / Base Color, sRGB |
 | `Material_Normal_DX.png` | Normal DirectX / Y−, datos |
+| `Material_Normal_GL.png` | Normal OpenGL / Y+, G = 255 − G del DX |
 | `Material_Roughness.png` | Rugosidad, datos |
 | `Material_AO.png` | Oclusión ambiental, datos |
 | `Material_Specular_UE.png` | Specular escalar UE: F0 = 0.08 × S, datos |
@@ -78,11 +80,18 @@ informa los controles que no pudo realizar.
 
 ## Visor que recibe cada usuario
 
-Además de los seis PNG, la skill entrega `Material_PBR.html`: foto, galería,
-esfera WebGL y controles independientes de Albedo, Normal, Roughness, AO,
-Specular y Height, con contraste de Roughness y Specular. Permite girar la
-esfera, restablecer valores y ver/copiar el prompt efectivo de cada mapa.
+Además de los siete PNG, la skill entrega `Material_PBR.html`: foto, galería,
+esfera, cubo con bordes redondeados y plano infinito. Hay controles independientes
+de Albedo, Normal, Roughness, AO, Specular y Height, contraste de Roughness y
+Specular, tiling UV e inversión Y del Normal. Permite girar, restablecer y
+ver/copiar el prompt efectivo de cada mapa. Son **siete PNG** porque se incluyen
+ambas convenciones de Normal. OpenGL se calcula exactamente del DX, sin otra
+llamada de IA; el visor explica esa operación y muestra el prompt que generó DX.
 Los ajustes solo afectan la vista previa; conservan los mapas originales.
+
+La plantilla es siempre la misma: temas claro y oscuro, sus logos Arquinovatos,
+los mismos controles y la misma distribución. Cambian el material, sus archivos,
+prompts y observaciones. No se diseña otra interfaz en cada ejecución.
 
 El HTML lleva las imágenes y el código incrustados, sin bibliotecas de Internet.
 Se puede abrir directamente en un navegador. La iluminación es orientativa y
@@ -99,13 +108,16 @@ archivos de esa ejecución.
 Un HTML abierto directamente o una galería remota no puede controlar el
 explorador de archivos de una computadora. En esos casos explica la opción
 local; en el celular siguen funcionando la esfera, la galería y los prompts.
-Los archivos auxiliares contienen rutas locales y se mantienen fuera del repo.
+El manifiesto usa rutas relativas y se entrega una copia exacta de la foto.
+Puedes mover la carpeta completa con `maps/`, HTML, iniciador, manifiesto y foto
+de referencia. El HTML por sí solo conserva imágenes y controles, pero abrir
+ubicaciones necesita los archivos locales y el acompañante.
 
 ## Para desarrolladores
 
 La skill incluye el constructor y la plantilla autocontenidos. Pruebas sin
 dependencias: `npm test`. El constructor no modifica píxeles; comprueba los
-seis PNG y conserva sus bytes al incrustarlos en el HTML. La referencia de
+siete PNG y conserva sus bytes al incrustarlos en el HTML. La referencia de
 uso está en `skills/arquinovatos-rendering-img-2-pbr/references/review.md`.
 
 Los originales, recortes y resultados permanecen en el espacio de trabajo del
