@@ -17,7 +17,14 @@ Image 1 = albedo, Image 2 = foto; para albedo solo se adjunta la foto.
 Un mapa PNG a 8 bits, sin texto, marco, render ni collage.
 Conserva diseño, encuadre, orientación y escala del maestro.
 Copia el archivo real de la herramienta a tu destino exclusivo.
+Trabaja en work; solo el candidato aprobado se copia a maps con sus bytes intactos.
 No modifiques otros archivos ni delegues de nuevo.
+Lee [ruta resuelta de references/quality.md].
+Ejecuta [ruta resuelta de scripts/check-seams.mjs] con [ejecutable Node disponible]
+en tu carpeta QA exclusiva.
+Inspecciona repetición 3 × 3, desplazamiento y registro con el maestro.
+Guarda review.json con el hash del archivo, aprobado o pendiente y hallazgos.
+No construyas HTML ni pruebes el visor durante la fase de imágenes.
 Devuelve ruta, dimensiones, canales y bits comprobados,
 referencias realmente enviadas, revisión hecha y limitaciones.
 Incluye el texto literal efectivo enviado y los roles de cada imagen en orden.
@@ -30,7 +37,7 @@ Si existe `referenced_image_paths`, usa `[albedo, foto]` para derivados y `[foto
 
 El generador puede guardar primero en su carpeta administrada. Copia después el archivo seleccionado al espacio de trabajo; no asumas que existe un parámetro para elegir destino. Si solo devuelve una imagen en contexto, usa su mecanismo de descarga documentado. Si no puede exportarse, informa el límite antes de afirmar que guardaste un archivo.
 
-Respeta concurrencia de agentes y del servicio. No generes seis mapas en una sola llamada ni un mosaico. Reutiliza agentes inactivos cuando la sesión limite el número total de agentes. La tarea de cada nuevo mapa debe volver a especificar las dos imágenes y su destino.
+Respeta concurrencia de agentes y del servicio. Después de aceptar el albedo, ocupa los huecos disponibles con distintos mapas y reutiliza agentes inactivos. Un agente no debe bloquear el arranque de otros mapas independientes mientras revisa o corrige el suyo. No generes seis mapas en una llamada ni un mosaico. La tarea de cada nuevo mapa especifica sus dos imágenes y destino.
 
 El agente de Normal entrega además `Material_Normal_GL.png` ejecutando el conversor incluido sobre el DX aceptado. Es una conversión determinista de datos, G = 255 − G, sin otra llamada de IA. Si el DX se corrige, reconvierte el GL. El prompt registrado corresponde al DX; la variante OpenGL se identifica como derivada.
 
@@ -40,7 +47,7 @@ El agente de Normal entrega además `Material_Normal_GL.png` ejecutando el conve
 - **Referencias:** los derivados recibieron el mismo albedo y foto. Verifica la llamada o evidencia disponible; el resumen de un agente no demuestra por sí solo que adjuntó imágenes.
 - **Dimensiones:** cuadradas y comunes. Corrige el mapa divergente. Si solo puedes igualar tamaños por remuestreo, informa resolución nativa y remuestreada sin afirmar detalle nuevo. No cambies el maestro a mitad del trabajo.
 - **Registro:** juntas, bordes y vetas coinciden con el maestro. Revisa detalles identificables; misma resolución no implica mismo diseño.
-- **Seamless:** continuidad de estructura y valor en ambos ejes y esquinas. Usa diagnósticos cuando sea posible, sin llamarlos mapas finales.
+- **Seamless:** continuidad de estructura y valor en ambos ejes y esquinas. Aplica [quality.md](quality.md), sin llamar mapas finales a los diagnósticos. Un albedo con costuras bloquea los derivados; un defecto crítico pendiente impide aprobar el conjunto y pasar al HTML.
 - **Albedo:** conserva identidad y variación del material, sin sombras, reflejos ni AO pintados.
 - **Normal:** DirectX / Y−; zona plana cerca de RGB (128, 128, 255), salientes y cavidades coherentes. Si hay análisis numérico, decodifica vectores y revisa longitud y consistencia. Renormalizar no corrige un relieve inventado; color violeta no demuestra un bake válido.
 - **Roughness:** negro liso, blanco rugoso; deriva del acabado, no de luminancia o inversión de otro mapa.

@@ -1,5 +1,7 @@
 # Visor de resultados
 
+Lee este documento **después de aceptar y entregar los PNG**, cuando el usuario elija construir el visor. Si omite HTML, no construyas ni abras el acompañante y no vuelvas a preguntarlo en esa ejecución. Si todavía no ha elegido, espera. Conserva los archivos para poder añadirlo después sin regenerar mapas.
+
 Usa los recursos de `assets/review/`; no recrees ni rediseñes el probador en cada ejecución. Incluye esfera y cubo redondeado con malla, plano infinito por intersección analítica, tiling UV y temas claro/oscuro con los logos incluidos. No requiere bibliotecas de red. Interpreta Albedo como sRGB, datos como lineales, Normal como DirectX Y− y Specular como F0 = 0.08 × S. La inversión Y es una prueba del relieve en la vista previa. La altura es relativa, sin escala física recuperada; en equipos sin texturas de vértice se representa como relieve de superficie.
 
 ## Construir
@@ -39,6 +41,6 @@ Al abrir directamente el HTML o una galería web, el navegador no dispone de ese
 
 ## Comprobar y entregar
 
-Comprueba las tres formas, nueve sliders, inversión Y, temas, giro, restablecimiento, siete archivos y prompts/copiar. Si hay herramientas de navegador, prueba también pantalla estrecha y menú contextual. El GL muestra su operación y el prompt del DX: no se atribuye a una segunda llamada de IA. Conserva los PNG y separa límites del material y del probador. El shader normaliza los vectores para dibujar; eso no repara el Normal original ni certifica el PBR.
+En uso normal basta verificar la salida del constructor, los siete mapas y sus prompts, y que el visor abra y dibuje el material si hay navegador disponible. La plantilla ya incorpora las tres formas, nueve sliders, inversión Y, temas, giro, restablecimiento y menú contextual. No repitas una batería de pruebas de todos los controles para cada material. Esa comprobación completa corresponde a cambios de la plantilla o a un fallo concreto. El GL muestra su operación y el prompt del DX; no se atribuye a otra llamada de IA. El shader normaliza los vectores para dibujar; eso no repara el Normal original ni certifica el PBR.
 
-Entrega los siete PNG y el HTML con su acompañante, manifiesto y copia de referencia. Construye y abre el visor como parte de cada material. Publicar fotos, prompts o resultados en un sitio requiere que el usuario lo solicite. La skill no necesita Sites, PBR Studio ni una cuenta del autor.
+Añade el HTML, acompañante, manifiesto y copia de referencia a los PNG ya entregados. Construye y abre únicamente los visores elegidos por el usuario, sin otra generación de IA. Publicar fotos, prompts o resultados en un sitio requiere que el usuario lo solicite. La skill no necesita Sites, PBR Studio ni una cuenta del autor.

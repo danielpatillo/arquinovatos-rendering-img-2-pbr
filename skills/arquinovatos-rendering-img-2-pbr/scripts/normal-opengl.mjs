@@ -11,7 +11,7 @@ function crc(bytes){let n=0xffffffff;for(const b of bytes)n=table[(n^b)&255]^(n>
 function chunk(type,data){const tag=Buffer.from(type),out=Buffer.alloc(data.length+12);out.writeUInt32BE(data.length);tag.copy(out,4);data.copy(out,8);out.writeUInt32BE(crc(Buffer.concat([tag,data])),data.length+8);return out;}
 const paeth=(a,b,c)=>{const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb&&pa<=pc?a:pb<=pc?b:c;};
 export function decodePNG(bytes){
-  if(!bytes.subarray(0,8).equals(signature))throw Error('Normal debe ser PNG.');
+  if(!bytes.subarray(0,8).equals(signature))throw Error('La imagen debe ser PNG.');
   let header,idats=[],ended=false;
   for(let at=8;at<bytes.length;){
     if(at+12>bytes.length)throw Error('PNG truncado.');
@@ -24,8 +24,8 @@ export function decodePNG(bytes){
     if(type==='IEND'){ended=true;break;}at=end;
   }
   if(!header||header.length!==13||!ended||!idats.length)throw Error('PNG incompleto.');
-  const width=header.readUInt32BE(0),height=header.readUInt32BE(4),channels=header[9]===2?3:header[9]===6?4:0;
-  if(!width||!height||width*height>50000000||header[8]!==8||!channels||header[10]||header[11]||header[12])throw Error('Normal requiere PNG RGB/RGBA de 8 bits, sin entrelazado.');
+  const width=header.readUInt32BE(0),height=header.readUInt32BE(4),channels=header[9]===0?1:header[9]===2?3:header[9]===6?4:0;
+  if(!width||!height||width*height>50000000||header[8]!==8||!channels||header[10]||header[11]||header[12])throw Error('Se requiere PNG gris/RGB/RGBA de 8 bits, sin entrelazado.');
   const stride=width*channels,raw=inflateSync(Buffer.concat(idats),{maxOutputLength:(stride+1)*height});
   if(raw.length!==(stride+1)*height)throw Error('Longitud de píxeles PNG no válida.');
   const data=Buffer.alloc(stride*height);
@@ -39,13 +39,21 @@ export function decodePNG(bytes){
   }
   return {width,height,channels,data};
 }
-export function invertNormalPNG(bytes){
-  const image=decodePNG(bytes),stride=image.width*image.channels;
-  for(let i=1;i<image.data.length;i+=image.channels)image.data[i]=255-image.data[i];
+export function encodePNG(image){
+  const {width,height,channels,data}=image;
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width*height>50000000||![1,3,4].includes(channels)||data.length!==width*height*channels)throw Error('Datos PNG no válidos.');
+  const stride=width*channels;
   const raw=Buffer.alloc((stride+1)*image.height);
   for(let y=0;y<image.height;y++)image.data.copy(raw,y*(stride+1)+1,y*stride,(y+1)*stride);
   const header=Buffer.alloc(13);header.writeUInt32BE(image.width,0);header.writeUInt32BE(image.height,4);header[8]=8;header[9]=image.channels===3?2:6;
-  return Buffer.concat([signature,chunk('IHDR',header),chunk('IDAT',deflateSync(raw,{level:9})),chunk('IEND',Buffer.alloc(0))]);
+  if(channels===1)header[9]=0;
+  return Buffer.concat([signature,chunk('IHDR',header),chunk('IDAT',deflateSync(raw,{level:6})),chunk('IEND',Buffer.alloc(0))]);
+}
+export function invertNormalPNG(bytes){
+  const image=decodePNG(bytes);
+  if(![3,4].includes(image.channels))throw Error('Normal requiere RGB/RGBA; no un mapa gris.');
+  for(let i=1;i<image.data.length;i+=image.channels)image.data[i]=255-image.data[i];
+  return encodePNG(image);
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   try{

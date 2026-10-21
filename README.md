@@ -1,18 +1,18 @@
 # Arquinovatos - Rendering IMG 2 PBR
 
-Una fotografía → seis tipos de mapas PBR, Normal DX/OpenGL, prompts y el visor 3D Arquinovatos. Son siete PNG y un HTML que se entrega siempre con el material.
+Una fotografía → seis tipos de mapas PBR revisados, Normal DX/OpenGL y prompts. Primero se entregan los siete PNG; después eliges si quieres añadir el visor 3D Arquinovatos.
 
-Estado experimental: las pruebas iniciales detectaron costuras y diferencias
-entre la apariencia de un mapa y los datos que debería representar. La skill
-informa esos límites; cada conjunto necesita revisión antes de usarlo en producción.
+Estado experimental: el generador puede introducir costuras o datos incorrectos.
+La skill revisa las imágenes y detiene la aprobación si persiste un defecto crítico.
+No presenta una textura con costuras conocidas como material terminado.
 
 ## Necesitas
 
 - Codex con visión, generación de imágenes integrada y subagentes. Los subagentes también necesitan acceso al generador y a las referencias.
 - Un espacio de trabajo donde guardar los archivos.
 - Una foto y una indicación del material si aparecen varias superficies.
-- Node.js 18 o superior para construir el HTML y abrir el acompañante local; no necesita paquetes npm. Codex puede usar su runtime incluido o preparar uno portátil desde la fuente oficial cuando lo autorices en el encargo.
-- Un navegador con WebGL para el probador. El HTML terminado funciona sin Internet.
+- Node.js 18 o superior para los diagnósticos de costuras y el HTML opcional; no necesita paquetes npm. Codex puede usar su runtime incluido o preparar uno portátil desde la fuente oficial cuando lo autorices en el encargo.
+- Solo si eliges el probador: un navegador con WebGL. El HTML terminado funciona sin Internet.
 
 No requiere claves API adicionales. Instalar instrucciones no añade herramientas: si falta una capacidad, la skill lo explica y se detiene.
 
@@ -24,7 +24,7 @@ Abre un chat nuevo de Codex. Adjunta la fotografía, cambia `[material y zona]` 
 Instala o actualiza esta habilidad desde GitHub y lee su SKILL.md para usarla ahora en esta misma conversación:
 https://github.com/danielpatillo/arquinovatos-rendering-img-2-pbr/tree/main/skills/arquinovatos-rendering-img-2-pbr
 Con la foto adjunta crea el material de [material y zona].
-Prepara los requisitos locales necesarios. Entrega los seis tipos de mapas con Normal DX y OpenGL, genera el visor Arquinovatos completo y ábrelo localmente.
+Prepara los requisitos locales necesarios. Usa subagentes en paralelo cuando la sesión lo permita. Primero entrega los seis tipos de mapas con Normal DX y OpenGL, revisados sin costuras visibles; después pregúntame si quiero crear el visor HTML u omitirlo.
 ```
 
 O descarga el ZIP del repositorio y copia la carpeta completa
@@ -51,9 +51,21 @@ Quiero el material de la fachaleta de piedra de la pared izquierda.
 Si no indicas el material, pregunta cuál quieres y, cuando sea posible, muestra
 la zona marcada para confirmarla. Si ya está claro, empieza directamente.
 
-Primero un subagente genera el albedo; después otros generan los cinco mapas
-restantes en paralelo o por tandas según la capacidad real. Cada uno recibe
-el mismo albedo y la misma foto o su recorte fiel.
+Primero un subagente genera el albedo y comprueba su repetición 3 × 3 y sus
+uniones con un desplazamiento de media imagen. Si tiene costuras, se corrige
+antes de seguir. Si persisten tras una corrección dirigida, se conserva el
+candidato y se informa el bloqueo, sin gastar llamadas en los cinco derivados.
+
+Con el albedo aprobado, los agentes generan y revisan los cinco mapas restantes
+en paralelo o por tandas según la capacidad real. Cada uno recibe el mismo
+albedo y la misma foto o su recorte fiel. No se construye ni prueba un visor
+durante esta fase.
+
+Con los PNG listos aparece la elección: **Crear visor HTML** u **Omitir HTML**.
+Si lo omites, termina con los mapas. Puedes pedir el visor después sobre esos
+mismos archivos, sin volver a generar imágenes.
+Si pides varios materiales, primero se procesa la fase de imágenes de todos;
+la elección de visores se hace al final del lote.
 
 ## Archivos de salida
 
@@ -75,12 +87,13 @@ los canales reales y cualquier conversión realizada.
 
 Son estimaciones visuales para materiales opacos no metálicos. Metal expuesto,
 vidrio y transparencias requieren otros parámetros. La generación por IA puede
-introducir diferencias entre mapas; la skill revisa alineación y continuidad e
-informa los controles que no pudo realizar.
+introducir diferencias entre mapas; la skill revisa alineación y continuidad.
+Un control numérico no garantiza seamless: también se inspeccionan los
+diagnósticos. Se comunica qué se comprobó, sin prometer exactitud física.
 
-## Visor que recibe cada usuario
+## Visor opcional desde la plantilla de GitHub
 
-Además de los siete PNG, la skill entrega `Material_PBR.html`: foto, galería,
+Si lo eliges después de los PNG, la skill crea `Material_PBR.html`: foto, galería,
 esfera, cubo con bordes redondeados y plano infinito. Hay controles independientes
 de Albedo, Normal, Roughness, AO, Specular y Height, contraste de Roughness y
 Specular, tiling UV e inversión Y del Normal. Permite girar, restablecer y
@@ -89,9 +102,14 @@ ambas convenciones de Normal. OpenGL se calcula exactamente del DX, sin otra
 llamada de IA; el visor explica esa operación y muestra el prompt que generó DX.
 Los ajustes solo afectan la vista previa; conservan los mapas originales.
 
-La plantilla es siempre la misma: temas claro y oscuro, sus logos Arquinovatos,
+La plantilla ya está programada y se descarga con la skill desde GitHub, en
+[`assets/review/`](skills/arquinovatos-rendering-img-2-pbr/assets/review/).
+El [constructor incluido](skills/arquinovatos-rendering-img-2-pbr/scripts/build-review.mjs)
+inserta tus archivos; no escribe otra aplicación ni llama al generador de imágenes.
+La interfaz es siempre la misma: temas claro y oscuro, sus logos Arquinovatos,
 los mismos controles y la misma distribución. Cambian el material, sus archivos,
-prompts y observaciones. No se diseña otra interfaz en cada ejecución.
+prompts y observaciones. En uso normal se comprueba la apertura del resultado;
+las pruebas completas de interfaz se reservan para cambios de la plantilla.
 
 El HTML lleva las imágenes y el código incrustados, sin bibliotecas de Internet.
 Se puede abrir directamente en un navegador. La iluminación es orientativa y
@@ -115,8 +133,10 @@ ubicaciones necesita los archivos locales y el acompañante.
 
 ## Para desarrolladores
 
-La skill incluye el constructor y la plantilla autocontenidos. Pruebas sin
-dependencias: `npm test`. El constructor no modifica píxeles; comprueba los
+La skill incluye el constructor, la plantilla y `scripts/check-seams.mjs`.
+Este último produce diagnósticos PNG y un informe con hash sin modificar los
+mapas ni construir HTML. Las métricas señalan anomalías; requieren revisión visual.
+Pruebas sin dependencias: `npm test`. El constructor no modifica píxeles; comprueba los
 siete PNG y conserva sus bytes al incrustarlos en el HTML. La referencia de
 uso está en `skills/arquinovatos-rendering-img-2-pbr/references/review.md`.
 
