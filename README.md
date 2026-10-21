@@ -2,6 +2,10 @@
 
 Una fotografía de un material → seis mapas PBR con el generador integrado de Codex y subagentes.
 
+Estado experimental: las pruebas iniciales detectaron costuras y diferencias
+entre la apariencia de un mapa y los datos que debería representar. La skill
+informa esos límites; cada conjunto necesita revisión antes de usarlo en producción.
+
 ## Necesitas
 
 - Codex con visión, generación de imágenes integrada y subagentes. Los subagentes también necesitan acceso al generador y a las referencias.

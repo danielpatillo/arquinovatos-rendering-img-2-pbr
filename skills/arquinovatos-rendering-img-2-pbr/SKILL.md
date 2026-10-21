@@ -41,6 +41,8 @@ Solicita **PNG de 8 bits por canal y la máxima resolución cuadrada nativa disp
 
 Espera el archivo real, inspecciónalo y corrige problemas concretos antes de continuar. El coordinador acepta el albedo sin volver a pedir aprobación del material ya identificado. Sus dimensiones, encuadre, orientación y diseño se vuelven el **maestro inmutable** para los cinco mapas siguientes. Si hay que reemplazarlo después, invalida todos sus derivados; no mezcles versiones.
 
+Aceptar un maestro para continuar no certifica todas sus propiedades. Si representa el material y sirve como diseño común, pero queda una costura o iluminación residual tras la corrección permitida, conserva la mejor versión, registra **QA parcial** y continúa los cinco derivados con esa limitación heredada. No gastes llamadas repitiendo el mismo defecto sistémico ni pidas confirmar de nuevo la estimación. Un archivo ausente, corrupto o del material equivocado sí bloquea sus derivados. La entrega parcial debe distinguir seis archivos generados de seis mapas aprobados para producción.
+
 ## 4. Generar cinco mapas en paralelo
 
 Lee [references/delegation.md](references/delegation.md). Lanza una tarea especializada por mapa hasta el límite real de la sesión y usa tandas o agentes inactivos para los restantes. No esperes al Normal para iniciar Roughness ni al Height para iniciar AO. Respeta también los límites del servicio de imágenes; no prometas que cinco llamadas siempre podrán ejecutarse a la vez.
