@@ -18,7 +18,7 @@ No requiere claves API adicionales. Instalar instrucciones no añade herramienta
 
 ## Instalar
 
-Adjunta la fotografía, cambia `[material y zona]` por tu objetivo y pega **un solo prompt**:
+Abre un chat nuevo de Codex. Adjunta la fotografía, cambia `[material y zona]` por tu objetivo y pega **un solo prompt**:
 
 ```text
 Instala o actualiza esta habilidad desde GitHub y lee su SKILL.md para usarla ahora en esta misma conversación:
