@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arquinovatos - Rendering IMG 2 PBR"
+  short_description: "Convierte una foto en seis mapas PBR con subagentes"
+  default_prompt: "Usa $arquinovatos-rendering-img-2-pbr para crear seis mapas PBR del material que señalo en esta fotografía."

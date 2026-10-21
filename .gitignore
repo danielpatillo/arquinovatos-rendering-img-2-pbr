@@ -1,0 +1,25 @@
+# Keep local images and executions out of this instructions-only package.
+work/
+output/
+outputs/
+maps/
+inputs/
+private/
+*.private.*
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.tif
+*.tiff
+*.exr
+*.zip
+.env
+.env.*
+*.pem
+*.key
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
