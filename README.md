@@ -3,7 +3,9 @@
 Una fotografía → seis tipos de mapas PBR revisados, Normal DX/OpenGL y prompts. Primero se entregan los siete PNG; después eliges si quieres añadir el visor 3D Arquinovatos.
 
 Estado experimental: el generador puede introducir costuras o datos incorrectos.
-La skill revisa las imágenes y detiene la aprobación si persiste un defecto crítico.
+La skill corrige y revisa el albedo en bucle hasta aprobarlo; entonces continúa
+automáticamente con los otros mapas. Una limitación real de herramientas o cuota
+interrumpe el trabajo conservado, sin fingir una aprobación.
 No presenta una textura con costuras conocidas como material terminado.
 
 ## Necesitas
@@ -24,7 +26,7 @@ Abre un chat nuevo de Codex. Adjunta la fotografía, cambia `[material y zona]` 
 Instala o actualiza esta habilidad desde GitHub y lee su SKILL.md para usarla ahora en esta misma conversación:
 https://github.com/danielpatillo/arquinovatos-rendering-img-2-pbr/tree/main/skills/arquinovatos-rendering-img-2-pbr
 Con la foto adjunta crea el material de [material y zona].
-Prepara los requisitos locales necesarios. Usa subagentes en paralelo cuando la sesión lo permita. Primero entrega los seis tipos de mapas con Normal DX y OpenGL, revisados sin costuras visibles; después pregúntame si quiero crear el visor HTML u omitirlo.
+Prepara los requisitos locales necesarios. Usa subagentes en paralelo cuando la sesión lo permita. Corrige y revisa el albedo en bucle hasta aprobarlo sin costuras visibles y continúa automáticamente con los otros mapas. Primero entrega los seis tipos de mapas con Normal DX y OpenGL revisados; después pregúntame si quiero crear el visor HTML u omitirlo.
 ```
 
 O descarga el ZIP del repositorio y copia la carpeta completa
@@ -52,11 +54,13 @@ Si no indicas el material, pregunta cuál quieres y, cuando sea posible, muestra
 la zona marcada para confirmarla. Si ya está claro, empieza directamente.
 
 Primero un subagente genera el albedo y comprueba su repetición 3 × 3 y sus
-uniones con un desplazamiento de media imagen. Si tiene costuras, se corrige
-antes de seguir. Si persisten tras una corrección dirigida, se conserva el
-candidato y se informa el bloqueo, sin gastar llamadas en los cinco derivados.
+uniones con un desplazamiento de media imagen. Si tiene costuras u otros defectos
+críticos, lo corrige y vuelve a revisar en bucle hasta aprobarlo, conservando los
+intentos. No pide confirmación entre correcciones ni aprueba por haber agotado
+un número de intentos. Solo interrumpe ante cancelación o un impedimento real
+de generación, cuota o revisión, e informa el estado pendiente.
 
-Con el albedo aprobado, los agentes generan y revisan los cinco mapas restantes
+Con el albedo aprobado, continúa automáticamente: los agentes generan y revisan los cinco mapas restantes
 en paralelo o por tandas según la capacidad real. Cada uno recibe el mismo
 albedo y la misma foto o su recorte fiel. No se construye ni prueba un visor
 durante esta fase.

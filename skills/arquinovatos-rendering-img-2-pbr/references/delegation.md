@@ -24,6 +24,8 @@ Ejecuta [ruta resuelta de scripts/check-seams.mjs] con [ejecutable Node disponib
 en tu carpeta QA exclusiva.
 Inspecciona repetición 3 × 3, desplazamiento y registro con el maestro.
 Guarda review.json con el hash del archivo, aprobado o pendiente y hallazgos.
+Para albedo, conserva cada intento por separado y corrige en bucle hasta aprobarlo,
+según quality.md; informa al coordinador para que actualice el progreso.
 No construyas HTML ni pruebes el visor durante la fase de imágenes.
 Devuelve ruta, dimensiones, canales y bits comprobados,
 referencias realmente enviadas, revisión hecha y limitaciones.
@@ -33,7 +35,7 @@ no sustituyas ese registro por la plantilla o el intento inicial.
 Si falta el generador o no puedes adjuntar imágenes, informa el bloqueo.
 ```
 
-Si existe `referenced_image_paths`, usa `[albedo, foto]` para derivados y `[foto]` para albedo; en otros clientes sigue su firma real. Inspecciona referencias locales antes de editar. No inventes argumentos de tamaño, formato o destino ni mezcles mecanismos de referencia incompatibles.
+Si existe `referenced_image_paths`, usa `[albedo, foto]` para derivados y `[foto]` para el albedo inicial. Para corregir el albedo, adjunta `[foto, candidato anterior]` e identifica sus roles expresamente; no confundas ese candidato con un maestro ya aprobado. En otros clientes sigue su firma real. Inspecciona referencias locales antes de editar. No inventes argumentos de tamaño, formato o destino ni mezcles mecanismos de referencia incompatibles.
 
 El generador puede guardar primero en su carpeta administrada. Copia después el archivo seleccionado al espacio de trabajo; no asumas que existe un parámetro para elegir destino. Si solo devuelve una imagen en contexto, usa su mecanismo de descarga documentado. Si no puede exportarse, informa el límite antes de afirmar que guardaste un archivo.
 

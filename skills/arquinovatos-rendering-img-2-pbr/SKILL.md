@@ -3,8 +3,8 @@ name: arquinovatos-rendering-img-2-pbr
 description: >-
   Convierte una fotografía y un material señalado en seis tipos de mapas PBR,
   revisa costuras y después ofrece un visor HTML opcional con controles y prompts
-  copiables. Usa el generador integrado de Codex y subagentes: albedo aprobado
-  primero y cinco derivados en paralelo.
+  copiables. Usa el generador integrado de Codex y subagentes: corrige el albedo
+  en bucle hasta aprobarlo y continúa con cinco derivados en paralelo.
   Para superficies opacas no metálicas.
 ---
 
@@ -22,7 +22,7 @@ Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coo
 
 Sigue **mapas → revisión → entrega de PNG → elección de HTML**. Durante la fase de imágenes no construyas páginas, servidores, instaladores del visor ni pruebas de interfaz. La plantilla ya está programada; no necesita diseño ni código nuevo por material.
 
-Mantén `work/progress.json` con la lista de casos del encargo y, para cada uno, material, foto o recorte, fase, albedo maestro y hash, mapas pendientes/aprobados y elección del visor (`pending`, `skip` o `build`). Solo el coordinador actualiza ese estado al iniciar y cambiar de fase. Léelo al retomar y antes de responder: un cambio de turno o compactación no termina el encargo ni permite olvidar materiales pendientes.
+Mantén `work/progress.json` con la lista de casos del encargo y, para cada uno, material, foto o recorte, fase, intento actual de albedo, historial de intentos y revisiones, albedo maestro y hash, mapas pendientes/aprobados y elección del visor (`pending`, `skip` o `build`). Solo el coordinador actualiza ese estado antes y después de cada intento y al cambiar de fase. Léelo al retomar y antes de responder: un cambio de turno o compactación no termina el encargo ni permite olvidar materiales pendientes.
 
 En un lote, realiza primero la fase de imágenes de todos los casos y después pregunta una vez por los visores de los materiales aprobados. No interrumpas el lote para construir o probar el HTML del primero. Un caso bloqueado conserva sus candidatos y no impide procesar los otros; nunca ofrezcas como listo el caso fallido.
 
@@ -54,9 +54,11 @@ Solicita **PNG de 8 bits por canal y la máxima resolución cuadrada nativa disp
 
 Antes de lanzar derivados, aplica [references/quality.md](references/quality.md): repetición 3 × 3, desplazamiento de media imagen y revisión del color sin iluminación horneada. El coordinador acepta el albedo sin volver a pedir aprobación del material identificado. **Una costura visible, junta interrumpida, marco repetido o iluminación horneada bloquea los cinco derivados.**
 
-Ante un defecto pide una corrección concreta al subagente y vuelve a revisar. Si persiste después de esa corrección, conserva los candidatos, explica el bloqueo y termina esta fase. Un albedo de «QA parcial» sigue pendiente y bloquea derivados y visor. No hagas reintentos indefinidos.
+**Ejecuta un bucle automático hasta aprobar el albedo:** genera o corrige → diagnostica → inspecciona → registra la decisión. Si falla, encarga al mismo subagente una corrección concreta de los defectos observados, adjuntando realmente la foto y el candidato que deba corregir, y repite la revisión del nuevo archivo. Conserva cada candidato, prompt literal, referencias, hash y revisión en `work/albedo/attempt-NNN/`; no sobrescribas el historial. No hay un límite fijo de correcciones ni una confirmación del usuario entre intentos. Si un defecto se repite sin mejora, cambia la instrucción de corrección según la evidencia e informa el progreso; no repitas ciegamente el mismo prompt ni rebajes el criterio para salir del bucle. Corrige con el generador integrado, no mediante retoques de píxeles por código.
 
-Solo el albedo aprobado se vuelve el **maestro inmutable**, con dimensiones, encuadre, orientación, diseño y hash registrados. Si cambia después, invalida todos sus derivados; no mezcles versiones.
+El bucle termina al aprobar el albedo o ante una interrupción real: cancelación del usuario, cuota agotada, generador inaccesible, error que impide continuar o imposibilidad de revisar. En una interrupción conserva el estado, explica la causa y no declara aprobado el candidato. Un albedo de «QA parcial» sigue pendiente y bloquea derivados y visor.
+
+Solo el albedo aprobado se vuelve el **maestro inmutable**, con dimensiones, encuadre, orientación, diseño y hash registrados. **Al aprobarlo, continúa de inmediato con el paso 4 dentro del mismo encargo, sin preguntar si debe continuar ni esperar otro mensaje.** Si cambia después, invalida todos sus derivados; no mezcles versiones.
 
 ## 4. Generar cinco mapas en paralelo
 
@@ -95,7 +97,7 @@ Albedo lleva color intrínseco; su luminancia no equivale a Height, Roughness, A
 
 Pide RGB para Albedo y Normal y monocanal para los cuatro escalares, todos PNG a 8 bits. Comprueba el formato recibido. Si el generador exporta RGB para un mapa gris, decláralo y conviértelo solo con herramientas compatibles con las reglas de la sesión; no lo describas como monocanal ni cambies su gamma. Si no hay conversión disponible, informa el contenedor real. Haz cualquier conversión autorizada antes de la revisión final: un hash o diagnóstico anterior no aprueba un archivo convertido después.
 
-Ante un defecto concreto, pide **una corrección dirigida al agente responsable**, conservando ambas referencias. Si persisten costuras, registro incorrecto o un error que falsee el tipo de mapa, conserva el trabajo e informa que el conjunto aún no está aprobado. No declares listo un conjunto con defectos conocidos ni empieces su visor.
+En los **derivados**, ante un defecto concreto pide **una corrección dirigida al agente responsable**, conservando ambas referencias. Si persisten costuras, registro incorrecto o un error que falsee el tipo de mapa, conserva el trabajo e informa que el conjunto aún no está aprobado. Si descubres un defecto del **albedo**, vuelve al bucle del paso 3 e invalida los derivados de ese maestro. No declares listo un conjunto con defectos conocidos ni empieces su visor.
 
 Con el conjunto aprobado, entrega **siete PNG en `maps/`: seis tipos y ambas convenciones de Normal**, enlazados o en un ZIP ligero. Selecciones, recortes y diagnósticos son intermediarios. Informa dimensiones, bits, canales reales y alcance de la revisión. «Sin costuras visibles en las pruebas realizadas» no es una certificación matemática ni un bake físico.
 

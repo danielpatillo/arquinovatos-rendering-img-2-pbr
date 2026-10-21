@@ -12,7 +12,7 @@ This output will become the master texture for generating the remaining PBR maps
 
 ## 2. Reference Image
 
-Only one reference image is supplied for this step: the photograph of the original material.
+For the initial generation, only one reference image is supplied: the photograph of the original material. A correction also supplies the previous albedo candidate; explicitly identify each attachment and preserve the photograph as the authority for material identity.
 
 In the subsequent map-generation steps, this photograph will be called Image 2. The albedo generated here will become Image 1, the authoritative reference for texture layout and UV alignment.
 
@@ -64,7 +64,7 @@ Maintain structural and color continuity across opposite edges and all four corn
 
 Distribute natural variation evenly enough to reduce obvious repetition.
 
-Where image-processing tools are available, inspect a 3 × 3 tiled preview and a half-width/half-height offset view. Correct discontinuities before delivery.
+Inspect a 3 × 3 tiled preview and a half-width/half-height offset view using the included diagnostic tool. Correct observed discontinuities with the integrated image generator, then diagnose and inspect the new candidate. Repeat this cycle until the coordinator approves the albedo; there is no fixed correction count and no user confirmation between iterations. Stop only for actual cancellation or a technical/resource condition preventing generation or inspection, and report the interruption without approving the image.
 
 Do not include those diagnostic views in the final image or claim to have performed checks that were not actually executed.
 
@@ -91,5 +91,7 @@ Return one completed albedo texture, not a rendered material preview, comparison
 Do not place text, labels, borders, or watermarks inside the image.
 
 Proceed with reasonable reference-guided estimates without requesting approval for ordinary reconstruction decisions.
+
+Return each candidate and its review to the coordinator, retaining the effective prompt and all reference roles. A failed review calls for another targeted correction. Once the coordinator accepts the albedo, the workflow automatically starts the five derived maps without waiting for another user message.
 
 If a technical requirement cannot be fulfilled, briefly disclose the actual limitation outside the image.
