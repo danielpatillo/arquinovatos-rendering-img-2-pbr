@@ -1,0 +1,6 @@
+{
+  "name": "arquinovatos-rendering-img-2-pbr",
+  "version": "1.1.0",
+  "private": true,
+  "scripts": { "test": "node --test" }
+}

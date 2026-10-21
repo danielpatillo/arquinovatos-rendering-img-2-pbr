@@ -20,6 +20,9 @@ Copia el archivo real de la herramienta a tu destino exclusivo.
 No modifiques otros archivos ni delegues de nuevo.
 Devuelve ruta, dimensiones, canales y bits comprobados,
 referencias realmente enviadas, revisión hecha y limitaciones.
+Incluye el texto literal efectivo enviado y los roles de cada imagen en orden.
+Si conservas una corrección, devuelve el prompt de esa llamada y sus referencias;
+no sustituyas ese registro por la plantilla o el intento inicial.
 Si falta el generador o no puedes adjuntar imágenes, informa el bloqueo.
 ```
 

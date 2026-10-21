@@ -1,0 +1,36 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const serverFile=path.resolve(__dirname,'../skills/arquinovatos-rendering-img-2-pbr/scripts/serve-review.mjs');
+
+test('local reveal rejects another origin and files absent from the generated manifest',async t=>{
+  assert.ok(fs.existsSync(serverFile),'Local reveal companion is not implemented');
+  const {createReviewServer}=await import(pathToFileURL(serverFile));
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'pbr-local-'));
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const html=path.join(root,'viewer.html'),file=path.join(root,'Material_BaseColor.png'),manifest=path.join(root,'review-files.json');
+  fs.writeFileSync(html,'<!doctype html><html><head></head><body>Material</body></html>');
+  fs.writeFileSync(file,'test file');
+  fs.writeFileSync(manifest,JSON.stringify({files:{'Material_BaseColor.png':file}}));
+  const revealed=[];
+  const local=await createReviewServer({htmlPath:html,manifestPath:manifest,port:0,revealer:async file=>revealed.push(file)});
+  t.after(()=>new Promise(resolve=>local.server.close(resolve)));
+  const page=await fetch(local.origin);
+  assert.equal(page.status,200);
+  const content=await page.text();
+  assert.ok(content.includes('PBR_LOCAL_BRIDGE'));
+  assert.ok(!content.includes(root),'Manifest paths must remain on the server');
+  const denied=await fetch(local.origin+'/api/reveal',{method:'POST',headers:{Origin:'https://unrelated.example','X-PBR-Token':local.token,'Content-Type':'application/json'},body:JSON.stringify({key:'Material_BaseColor.png'})});
+  assert.equal(denied.status,403);
+  const unknown=await fetch(local.origin+'/api/reveal',{method:'POST',headers:{Origin:local.origin,'X-PBR-Token':local.token,'Content-Type':'application/json'},body:JSON.stringify({key:'../../private.txt'})});
+  assert.equal(unknown.status,404);
+  const noToken=await fetch(local.origin+'/api/reveal',{method:'POST',headers:{Origin:local.origin,'Content-Type':'application/json'},body:JSON.stringify({key:'Material_BaseColor.png'})});
+  assert.equal(noToken.status,403);
+  assert.deepEqual(revealed,[]);
+  const allowed=await fetch(local.origin+'/api/reveal',{method:'POST',headers:{Origin:local.origin,'X-PBR-Token':local.token,'Content-Type':'application/json'},body:JSON.stringify({key:'Material_BaseColor.png'})});
+  assert.equal(allowed.status,200);
+  assert.deepEqual(revealed,[fs.realpathSync(file)]);
+});

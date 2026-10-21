@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#164f66">
+  <meta name="description" content="Fotografía, mapas PBR, prompts y probador de materiales en tiempo real.">
+  <title>Arquinovatos · Foto a PBR</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="cases.js" defer></script>
+  <script src="pbr-math.js" defer></script>
+  <script src="pbr-viewer.js" defer></script>
+  <script src="review.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">Arquinovatos</div>
+    <span>Rendering IMG 2 PBR</span>
+  </header>
+  <main>
+    <div class="intro">
+      <h1>De foto a material</h1>
+      <p>Revisa el original y los seis mapas de cada prueba. Toca cualquier imagen para ampliarla.</p>
+    </div>
+    <nav class="case-picker" aria-label="Elegir prueba">
+      <label for="material">Material</label>
+      <div class="picker-controls">
+        <button id="previous" type="button" aria-label="Material anterior">Anterior</button>
+        <select id="material"></select>
+        <button id="next" type="button" aria-label="Material siguiente">Siguiente</button>
+      </div>
+    </nav>
+    <section class="case" aria-labelledby="case-name">
+      <div class="case-heading">
+        <h2 id="case-name"></h2>
+        <span id="counter" aria-live="polite"></span>
+      </div>
+      <section class="material-tester" aria-labelledby="tester-title">
+        <div class="tester-heading"><h3 id="tester-title">Probador en esfera</h3><button id="reset-material" type="button">Restablecer</button></div>
+        <div class="tester-layout">
+          <div class="sphere-stage"><canvas id="material-sphere" tabindex="0" role="img" aria-label="Esfera del material. Arrastra o usa las flechas para girar."></canvas><label class="motion-control"><input type="checkbox" id="rotate-material"> Giro automático</label><p id="sphere-status" role="status" aria-live="polite">Preparando el probador…</p></div>
+          <div id="map-controls" class="map-controls"></div>
+        </div>
+        <p class="preview-note">Los ajustes afectan a la vista previa. Los PNG originales se conservan. Iluminación de estudio orientativa; altura relativa sin escala física calibrada.</p>
+      </section>
+      <div class="comparison">
+        <aside class="reference">
+          <h3>Foto original</h3>
+          <button class="image-button original-button" id="original-button" type="button" aria-label="Ampliar foto original">
+            <img id="original" alt="" decoding="async">
+            <span class="expand">Ampliar</span>
+          </button>
+          <p id="zone" class="zone"></p>
+          <div class="reference-actions"><button id="original-actions" type="button">Acciones del original</button><a id="pin" target="_blank" rel="noopener noreferrer">Ver fuente</a></div>
+        </aside>
+        <div class="outputs">
+          <div class="outputs-heading"><h3>Seis mapas generados</h3><span id="map-dimensions"></span></div>
+          <div class="map-grid" id="maps"></div>
+        </div>
+      </div>
+      <details class="review" open>
+        <summary>Revisión de este material</summary>
+        <p id="case-note"></p>
+      </details>
+    </section>
+    <footer>
+      <p><strong>Prueba experimental.</strong> Los mapas son estimaciones artísticas y necesitan revisión. El probador permite observar su respuesta bajo una luz de estudio. Consulta los bits y canales reales bajo cada mapa antes de importarlo en tu motor 3D.</p>
+      <p>Las imágenes se muestran desde los archivos obtenidos, sin corrección, recorte ni reescalado guardado. El navegador ajusta su tamaño de visualización.</p>
+    </footer>
+    <noscript>Activa JavaScript para seleccionar el material y ver sus mapas.</noscript>
+  </main>
+  <dialog id="viewer" aria-labelledby="viewer-title">
+    <div class="viewer-top"><h2 id="viewer-title"></h2><button id="close-viewer" type="button">Cerrar</button></div>
+    <div class="viewer-image"><img id="large-image" alt=""></div>
+    <div class="viewer-controls">
+      <button id="previous-image" type="button" aria-label="Imagen anterior">Anterior</button>
+      <span id="image-counter" aria-live="polite"></span>
+      <button id="next-image" type="button" aria-label="Imagen siguiente">Siguiente</button>
+    </div>
+    <a id="full-file" target="_blank" rel="noopener">Abrir archivo a tamaño completo</a>
+  </dialog>
+<dialog id="prompt-viewer" aria-labelledby="prompt-title">
+    <div class="viewer-top"><h2 id="prompt-title">Prompt del mapa</h2><button id="close-prompt" type="button">Cerrar</button></div>
+    <p id="prompt-provenance" class="prompt-hint"></p><p id="prompt-references" class="prompt-hint"></p>
+    <label class="sr-only" for="prompt-text">Prompt utilizado</label><textarea id="prompt-text" readonly rows="13" spellcheck="false"></textarea>
+    <div class="prompt-actions"><button id="copy-prompt" type="button">Copiar prompt</button><span id="copy-status" role="status" aria-live="polite"></span></div>
+  </dialog>
+  <div id="file-menu" class="file-menu" role="menu" aria-label="Acciones del archivo" hidden>
+    <strong id="file-menu-name"></strong>
+    <button id="menu-open" type="button" role="menuitem">Abrir imagen</button>
+    <button id="menu-reveal" type="button" role="menuitem">Abrir ubicación del archivo</button>
+    <button id="menu-prompt" type="button" role="menuitem">Ver y copiar prompt</button>
+    <p id="file-menu-note" role="status"></p>
+  </div>
+</body>
+</html>

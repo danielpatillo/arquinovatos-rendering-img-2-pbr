@@ -1,17 +1,21 @@
 ---
 name: arquinovatos-rendering-img-2-pbr
-description: Convierte una fotografía y un material señalado en seis mapas PBR con el generador integrado de Codex y subagentes. Aclara la selección solo si es ambigua; genera primero albedo y después cinco mapas alineados en paralelo. Para superficies opacas no metálicas.
+description: >-
+  Convierte una fotografía y un material señalado en seis mapas PBR y un visor HTML
+  con esfera, controles por mapa y prompts copiables. Usa el generador integrado
+  de Codex y subagentes: albedo primero y cinco derivados en paralelo.
+  Para superficies opacas no metálicas.
 ---
 
 # Arquinovatos - Rendering IMG 2 PBR
 
-Recibe **una fotografía** como único archivo de entrada y entrega **seis mapas PBR**. El usuario puede identificar el material en el mismo mensaje. Cada mapa se genera mediante un subagente; el coordinador selecciona, prepara referencias y revisa.
+Recibe **una fotografía** como único archivo de entrada y entrega **seis mapas PBR y un visor HTML interactivo**. El usuario puede identificar el material en el mismo mensaje. Cada mapa se genera mediante un subagente; el coordinador selecciona, prepara referencias y revisa.
 
 ## Capacidades necesarias
 
 Comprueba visión, generador de imágenes **integrado de Codex**, subagentes que tengan ese generador y acceso a los archivos. Usa las herramientas y firmas reales de la sesión, que pueden variar entre clientes. Si falta una capacidad, explica cuál falta y detén la generación. No sustituyas el flujo por APIs, otro proveedor, imágenes de stock, código que dibuje texturas ni ejecución sin subagentes. No solicites claves API ni cambies configuraciones globales. Instalar la skill no habilita capacidades ausentes.
 
-Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coordinador salvo indicación expresa del usuario.
+Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coordinador salvo indicación expresa del usuario. Para construir el visor usa Node.js disponible en la sesión, incluido el runtime de Codex cuando exista; los scripts no necesitan instalar paquetes. El navegador necesita WebGL para la esfera. Si no puedes construir o comprobar el visor, conserva los mapas e informa la limitación concreta.
 
 ## 1. Identificar el material
 
@@ -67,6 +71,8 @@ Cada agente lee y ejecuta el prompt correspondiente:
 
 Asigna destinos exclusivos. Ningún agente modifica el albedo u otros mapas. El coordinador reúne los resultados. Si el usuario pide procesar varias fotos, repite la unidad de una foto a seis mapas por caso, con maestros y carpetas independientes.
 
+Cada agente registra **el texto efectivo pasado al generador**, no solo el archivo de plantilla. Reúne en `work/prompts.json` una entrada por nombre final, con `text` y `exact: true` cuando proceda. Si una corrección produce el mapa retenido, su prompt es el que corresponde al final; conserva los intentos anteriores separados. Registra también las dos referencias y sus roles. No reconstruyas un prompt perdido y lo presentes como literal: el visor admite indicar que no está disponible.
+
 ## 5. Revisar y entregar
 
 Inspecciona los seis archivos reales: mapa correcto, proporción cuadrada, mismas dimensiones y orientación. La igualdad de tamaño no demuestra alineación: compara posiciones de juntas, vetas, bordes y poros. Revisa continuidad de bordes en ambos ejes y esquinas, preferentemente con repetición 3 × 3 y desplazamiento de media imagen cuando haya herramientas. Conserva esos diagnósticos fuera de `maps/`.
@@ -77,6 +83,12 @@ Pide RGB para Albedo y Normal y monocanal para los cuatro escalares, todos PNG a
 
 Ante un defecto concreto, pide **una corrección dirigida al agente responsable**, conservando ambas referencias. No rehagas mapas válidos. Si sigue sin resolverse o una herramienta falla de forma persistente, conserva el trabajo e informa qué falta; no hagas reintentos indefinidos ni declares completo un conjunto incompleto.
 
-Entrega **exactamente seis mapas finales**, enlazados o en un ZIP que contenga solo esos seis PNG. Selecciones, recortes, diagnósticos y variantes son intermediarios. Informa dimensiones, bits, canales reales y límites observados. Distingue comprobación técnica, revisión visual y propiedades no verificadas; no afirmes un bake, exactitud física, alineación perfecta o pruebas de render que no realizaste. Son estimaciones artísticas a partir de una fotografía.
+Mantén **exactamente seis mapas finales en `maps/`**, enlazados o en un ZIP que contenga solo esos seis PNG. Entrega además el visor y su acompañante local conforme al siguiente apartado. Selecciones, recortes, diagnósticos y variantes son intermediarios. Informa dimensiones, bits, canales reales y límites observados. Distingue comprobación técnica, revisión visual y propiedades no verificadas; no afirmes un bake, exactitud física, alineación perfecta o pruebas de render que no realizaste. Son estimaciones artísticas a partir de una fotografía.
+
+## 6. Construir el visor de cada resultado
+
+Lee [references/review.md](references/review.md) y usa la plantilla y el constructor incluidos. Produce `Material_PBR.html` con la foto y los seis PNG incrustados sin modificar sus bytes. Incluye la esfera en tiempo real, intensidad independiente de los seis mapas, contrastes de roughness y specular, galería, menú contextual y prompt copiable por mapa. No sustituyas un render real por una esfera dibujada con CSS o una imagen fija.
+
+El constructor también crea `Iniciar_visor.mjs` y `review-files.json`. El HTML funciona sin servidor para revisar y ajustar. Para **abrir ubicación del archivo**, inicia el acompañante local en la misma computadora y abre su URL con las herramientas disponibles. Usa únicamente los archivos de esta ejecución; el acompañante no ofrece acceso general al disco. En un enlace remoto o en el celular esa acción debe explicarse como local, no fingirse. Los controles solo cambian la vista previa, no los PNG finales.
 
 Generar mapas no autoriza publicar fotos ni resultados. Mantén referencias y ejecuciones fuera del paquete público de la skill.
