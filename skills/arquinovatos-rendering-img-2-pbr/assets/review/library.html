@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Tu biblioteca local de materiales Arquinovatos.">
+  <title>Mis materiales · Arquinovatos</title>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('arquinovatos-pbr-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch{document.documentElement.dataset.theme='dark';}</script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="masthead"><div class="brand" role="img" aria-label="Arquinovatos"><img class="logo-dark" src="logo-dark.png" width="3440" height="1440" alt=""><img class="logo-light" src="logo-light.png" width="3440" height="1440" alt=""></div><button id="theme-toggle" type="button">Cambiar tema</button></header>
+  <main class="library-main">
+    <div class="library-heading"><div><h1>Mis materiales</h1><p id="library-count" role="status" aria-live="polite"></p></div><button id="open-library" type="button">Abrir carpeta de todos los materiales</button></div>
+    <div class="library-tools"><label for="library-search">Buscar material</label><input id="library-search" type="search" placeholder="Piedra, madera, piso…" autocomplete="off"><button id="refresh-library" type="button">Actualizar historial</button></div>
+    <p id="library-status" class="action-status" role="status" aria-live="polite"></p>
+    <p id="library-warning" class="action-status" role="status" hidden></p>
+    <p id="library-empty" class="library-empty" hidden></p>
+    <div id="library-grid" class="library-grid"></div>
+    <noscript>Activa JavaScript para consultar los materiales guardados.</noscript>
+  </main>
+  <script>window.PBR_LIBRARY = [];
+window.PBR_LIBRARY_WARNINGS = 0;
+</script>
+  <script src="library.js" defer></script>
+</body>
+</html>

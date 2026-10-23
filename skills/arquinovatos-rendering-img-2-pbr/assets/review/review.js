@@ -59,6 +59,16 @@
     catch(error){$('file-menu-note').textContent=error.message;}
   }
   const openMapsButton=$('open-maps');openMapsButton.disabled=!window.PBR_LOCAL_BRIDGE;
+  const libraryBridge=window.PBR_LOCAL_BRIDGE,libraryLink=libraryBridge?.libraryUrl||window.PBR_LIBRARY_LINK;
+  if(typeof libraryLink==='string'&&libraryLink&&!/^(?:javascript|data):/i.test(libraryLink)){$('library-link').href=libraryLink;$('library-link').hidden=false;}
+  for(const [id,route,enabled] of [['open-material-folder','/api/open-material',!!libraryBridge],['open-all-materials','/api/open-library',!!libraryBridge?.canOpenLibrary]]){
+    const button=$(id);button.disabled=!enabled;if(!enabled)button.title='Inicia Iniciar_visor.mjs para abrir carpetas.';
+    button.addEventListener('click',async()=>{
+      if(!enabled)return;button.disabled=true;$('library-action-status').textContent='Abriendo carpeta…';
+      try{const response=await fetch(libraryBridge.origin+route,{method:'POST',headers:{'Content-Type':'application/json','X-PBR-Token':libraryBridge.token},body:'{}'});if(!response.ok)throw Error('No se pudo abrir la carpeta. Revisa su ubicación.');$('library-action-status').textContent='Carpeta abierta en esta computadora.';}
+      catch(error){$('library-action-status').textContent=error.message;}finally{button.disabled=false;}
+    });
+  }
   if(openMapsButton.disabled)openMapsButton.title='Inicia el visor local para abrir la carpeta.';
   openMapsButton.addEventListener('click',async()=>{
     const bridge=window.PBR_LOCAL_BRIDGE;if(!bridge)return;

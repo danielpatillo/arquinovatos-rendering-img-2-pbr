@@ -6,6 +6,8 @@ Adjunta una foto e indica la superficie. Pídelo así:
 
 También puedes usar el [enlace directo de GitHub](https://github.com/danielpatillo/arquinovatos-rendering-img-2-pbr/tree/main/skills/arquinovatos-rendering-img-2-pbr). La petición incluye cargar, instalar o actualizar la skill y usarla en esa conversación. Las instrucciones completas están en [SKILL.md](skills/arquinovatos-rendering-img-2-pbr/SKILL.md); no necesitas pegarlas en el chat.
 
+[arquinovatos.com/IMG2PBR](https://arquinovatos.com/IMG2PBR) lleva a la misma skill.
+
 ## Qué recibes
 
 Una carpeta local con siete mapas base PNG8: BaseColor, Normal DX y GL, Roughness, AO, Specular UE y Height. Incluye también tres contrastes de Roughness y tres de Specular calculados con las recetas correspondientes de PBR Studio: trece PNG en total cuando hay variación suficiente. Conserva ambos originales. Si una fuente uniforme no admite variantes útiles, lo informa sin inventar detalle.
@@ -24,7 +26,15 @@ Instalar la skill no añade capacidades que el agente no tenga. No requiere clav
 
 ## Carpeta y visor
 
-Los PNG se guardan directamente en maps/. El resultado incluye Material_PBR.html, Iniciar_visor.mjs, review-files.json y la foto de referencia, salvo que hayas pedido solo PNG. Si una limitación técnica impide construir o revisar el HTML, conserva los PNG aprobados e informa el impedimento. Para abrir carpetas desde el visor, el agente inicia `node Iniciar_visor.mjs` y abre su dirección local. Puedes mover el resultado conservando esa carpeta completa.
+Los PNG se guardan directamente en maps/. El resultado incluye Material_PBR.html, Iniciar_visor.mjs, material-library.mjs, review-files.json y la foto de referencia, salvo que hayas pedido solo PNG. Si una limitación técnica impide construir o revisar el HTML, conserva los PNG aprobados e informa el impedimento. Para abrir carpetas desde el visor, el agente inicia `node Iniciar_visor.mjs` y abre su dirección local. Puedes mover el resultado conservando esa carpeta completa.
+
+## Historial de materiales
+
+La biblioteca se guarda en `Arquinovatos/Materiales_PBR` dentro de tu carpeta personal. Cada material nuevo tiene su propia carpeta; un destino que indiques expresamente se respeta. El catálogo `Biblioteca_PBR.html` guarda el acceso a tus resultados y permite buscar y volver a abrir cada visor en cualquier momento, incluso después de actualizar la skill o cerrar Codex.
+
+Pide **«Abre mi biblioteca de materiales Arquinovatos»**. Para usar las acciones de carpeta, Codex inicia `node Iniciar_biblioteca.mjs` desde la biblioteca y abre su dirección local. Tienes **Abrir carpeta de este material** y **Abrir carpeta de todos los materiales**, además de la carpeta de mapas. Si cierras el servidor, basta con volver a ejecutar el iniciador; los archivos y el historial permanecen guardados.
+
+Los materiales anteriores se pueden importar desde una carpeta de resultados conocida: Codex los indexa sin mover, copiar ni regenerar sus mapas. Permanecen en su ubicación original y su ficha abre esa carpeta. Los materiales sin visor o cuyas carpetas ya no están disponibles conservan su registro con el estado correspondiente. Más detalles en [library.md](skills/arquinovatos-rendering-img-2-pbr/references/library.md).
 
 El material y sus controles funcionan sin Internet. Redes, WhatsApp y la landing se cargan mediante la configuración pública y la página remota vigentes de Arquinovatos. La landing se muestra después de los mapas; su HTML no se copia en este repositorio ni dentro del material. Esa integración no recibe fotos, mapas, prompts ni rutas locales.
 
@@ -33,5 +43,7 @@ El material y sus controles funcionan sin Internet. Redes, WhatsApp y la landing
 La skill está en skills/arquinovatos-rendering-img-2-pbr. Los helpers preparan QA, exportan variantes y construyen el visor sin pintar nuevas texturas. Las bases y los PNG incrustados conservan sus bytes. Ejecuta `npm test` para las comprobaciones automáticas.
 
 Este repositorio distribuye instrucciones, prompts, plantilla e integración pública. Las referencias y materiales de cada usuario permanecen en su espacio de trabajo.
+
+El historial es local y privado. Cada persona genera y conserva sus materiales con su propia cuenta y computadora; no se distribuyen cuentas ni credenciales del autor.
 
 Licencia MIT; no concede derechos sobre las fotos que aporte cada usuario.

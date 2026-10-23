@@ -3,7 +3,7 @@ name: arquinovatos-rendering-img-2-pbr
 description: >-
   Convierte una fotografía y un material señalado en seis tipos de mapas PBR,
   revisa costuras y después crea automáticamente un visor HTML con controles y prompts
-  copiables. Usa el generador integrado de Codex y subagentes: corrige el albedo
+  copiables e historial local de materiales. Usa el generador integrado de Codex y subagentes: corrige el albedo
   en bucle hasta aprobarlo y continúa con cinco derivados en paralelo.
   Para superficies opacas no metálicas.
 ---
@@ -12,11 +12,13 @@ description: >-
 
 Recibe **una fotografía** y entrega primero **seis tipos de mapas PBR revisados**. Son siete PNG: el Normal se entrega en DX y OpenGL. Después de los resultados finales crea automáticamente el **visor HTML**, usando la plantilla incluida, sin preguntar si debe construirlo ni esperar otro mensaje. Respeta una petición expresa de entregar solo PNG. El usuario puede identificar el material en el mismo mensaje. Los seis mapas base se generan mediante subagentes; la convención Normal opuesta se obtiene invirtiendo exactamente G mediante código.
 
+Conserva cada resultado final en una **biblioteca local persistente**. Desde `Biblioteca_PBR.html` se consultan los materiales creados, se vuelve a abrir cada visor y se accede a la carpeta individual o a la de toda la biblioteca. Una petición de «ver mis materiales», «abrir el historial» o reabrir un material usa [references/library.md](references/library.md), sin volver a generar imágenes ni requerir visión o generador para consultar resultados existentes.
+
 La revisión es **práctica y proporcional**: acepta el Normal origen en DX **o** OpenGL y obtén la otra convención invirtiendo G. No gastes generaciones para forzar Y, una longitud vectorial perfecta o un número de gris orientativo. Conserva como advertencias las limitaciones menores; bloquea defectos visibles o de significado material según [quality.md](references/quality.md).
 
 ## Pedirlo en una frase
 
-Con una foto adjunta basta: **«Con la skill https://arquinovatos.com/PBR2IMG dame el material de [superficie]»**. La ruta pública redirige a esta skill en GitHub; también admite su enlace directo. No hagas que el usuario copie un procedimiento de instalación, requisitos, delegación o revisión en su mensaje.
+Con una foto adjunta basta: **«Con la skill https://arquinovatos.com/PBR2IMG dame el material de [superficie]»**. También funciona `https://arquinovatos.com/IMG2PBR`; ambas rutas redirigen a esta skill en GitHub, y admite su enlace directo. No hagas que el usuario copie un procedimiento de instalación, requisitos, delegación o revisión en su mensaje.
 
 La petición de usar la skill desde su enlace incluye cargar su `SKILL.md`, instalarla o actualizarla en la ubicación personal que admita el agente y usarla en este mismo encargo. Resuelve el enlace y conserva la carpeta completa de instrucciones, scripts y plantilla; compara la versión pública antes de reemplazar una instalación existente y respeta cambios locales del usuario. No sobrescribas resultados anteriores. Instalar no añade capacidades ausentes: comprueba las del entorno y continúa con las disponibles según esta skill. La instalación no requiere que el usuario vuelva a pegar la solicitud larga.
 
@@ -52,7 +54,7 @@ Si el objetivo es pequeño o hay otros materiales que distraen, usa un **recorte
 
 Todos los agentes usarán la misma foto o el mismo recorte, sin reinterpretaciones diferentes. Resume material, acabado, organización del grano o juntas y relieve estimado en una ficha breve común. La cobertura nominal es **2 × 2 m por repetición**, no una medida recuperada con precisión de la foto.
 
-Crea una carpeta nueva en el destino indicado o en el espacio de trabajo, con `maps/` para archivos aprobados y `work/` para candidatos, prompts y diagnósticos. Copia un candidato a su nombre final en `maps/` solo después de aprobarlo, sin cambiar sus bytes. No escribas resultados dentro de la skill. Resuelve las rutas en esta ejecución; no dependas de rutas, programas o cuentas de la computadora del autor.
+Lee [references/library.md](references/library.md). Si no hay destino expreso, ejecuta `node <skill>/scripts/material-library.mjs new --name <material>`: reserva una carpeta nueva en la biblioteca personal y devuelve las rutas de material y `maps/`, sin construir HTML durante la fase de imágenes. Si el usuario indicó un destino, respétalo; registra después ese material en la misma biblioteca sin moverlo ni copiar sus mapas. Guarda la ruta de biblioteca en `work/progress.json` y úsala en todo el encargo. Cada carpeta contiene `maps/` para archivos aprobados y `work/` para candidatos, prompts y diagnósticos. Copia un candidato a su nombre final en `maps/` solo después de aprobarlo, sin cambiar sus bytes. No escribas resultados dentro de la skill ni del repositorio. Resuelve las rutas en esta ejecución; no dependas de rutas, programas o cuentas de la computadora del autor.
 
 ## 3. Generar el albedo con un subagente
 
@@ -115,6 +117,8 @@ Entrega la **carpeta local `maps/` con los trece PNG**: siete base y seis varian
 
 **Continúa automáticamente con el visor HTML después de entregar los PNG finales**, sin pedir confirmación ni esperar otro mensaje. Guarda `viewer_choice: "build"` y pasa al paso 6 en el mismo encargo. Solo una petición expresa del usuario de entregar únicamente PNG guarda `skip` y omite el visor. Un conjunto sin aprobar sigue bloqueando su construcción. Si una limitación técnica impide construirlo o revisarlo, conserva los PNG aprobados y registra e informa ese impedimento concreto.
 
+Registra cada resultado final según [library.md](references/library.md): después de entregar los PNG aprobados y antes de construir su visor, ejecuta `register` con estado `viewer-pending`; así el material queda en el historial aunque se interrumpa la construcción. El constructor lo actualiza automáticamente a `ready`; las entregas solo PNG y los fallos técnicos de HTML usan `png-only` o `viewer-error`. No registres candidatos ni conjuntos incompletos como materiales listos. En lotes, completa primero la fase de imágenes de todos los casos y después registra los resultados y construye los visores aprobados.
+
 ## 6. Construir el visor automáticamente después de los resultados finales
 
 Después de aprobar y entregar los PNG finales, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. No vuelvas a preguntar por el HTML. Usa la plantilla de `assets/review/`, descargada con la skill desde GitHub: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, trece PNG y los dos logos incrustados sin modificar los originales. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
@@ -125,6 +129,8 @@ Mantén únicamente etiquetas, controles y mensajes operativos indispensables. N
 
 Después de todos los mapas carga la landing vigente por su URL remota, usando la integración pública de MKT. Distribuye solo el enlace y el código de integración; no copies el HTML de la landing al repositorio ni al archivo del material. La integración no recibe la foto, mapas, prompts ni rutas locales. La vista local del material sigue siendo usable si la web no está disponible.
 
-El constructor también crea `Iniciar_visor.mjs`, `review-files.json` y una copia exacta `Foto_referencia.ext`. El manifiesto usa rutas relativas: conserva la carpeta completa con `maps/` al moverla. El HTML funciona solo para revisar y ajustar. Inicia el acompañante en una sesión retenida y abre su URL en la misma computadora para habilitar **Abrir ubicación del archivo**. Usa únicamente los archivos de esta ejecución; el acompañante no ofrece acceso general al disco. En un enlace remoto o en el celular esa acción debe explicarse como local. Los controles solo cambian la vista previa, no los PNG finales.
+El constructor también crea `Iniciar_visor.mjs`, su helper `material-library.mjs`, `review-files.json` y una copia exacta `Foto_referencia.ext`. El manifiesto usa rutas relativas: conserva la carpeta completa con `maps/` al moverla. El HTML funciona solo para revisar y ajustar. Inicia el acompañante en una sesión retenida y abre su URL en la misma computadora para habilitar **Abrir ubicación del archivo**, **Abrir carpeta de este material** y **Abrir carpeta de todos los materiales**. El enlace **Mis materiales** vuelve al catálogo. El acompañante solo abre archivos manifestados y materiales registrados en esa biblioteca; no ofrece acceso general al disco. En un enlace remoto o en el celular esas acciones abren carpetas en la computadora que ejecuta el acompañante. Los controles solo cambian la vista previa, no los PNG finales.
+
+Comprueba `library.registered` en el resultado del constructor. Enlaza también el `Biblioteca_PBR.html` persistente devuelto, además del visor del material. No guardes una URL temporal de localhost como si fuera el historial: al volver a consultarlo, abre el HTML guardado o reinicia `Iniciar_biblioteca.mjs`. No declares un registro o visor revisado cuando su construcción, escritura o apertura falló.
 
 Generar mapas no autoriza publicar fotos ni resultados. Mantén referencias y ejecuciones fuera del paquete público de la skill.

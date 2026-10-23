@@ -22,7 +22,7 @@ function fixture(label){
   }
   const photo=path.join(root,'photo.png');fs.copyFileSync(path.join(maps,names[0]),photo);
   const prompts=path.join(root,'prompts.json');fs.writeFileSync(prompts,JSON.stringify(Object.fromEntries(names.filter(name=>name!=='Material_Normal_GL.png').map(name=>[name,{text:'Actual prompt '+name,exact:true,reference_roles:['approved master','real crop']}]))));
-  return {root,maps,photo,prompts,output:path.join(root,'Material_PBR.html')};
+  return {root,maps,photo,prompts,library:path.join(run,'history'),output:path.join(root,'Material_PBR.html')};
 }
 const built=fixture('build'),originals=Object.fromEntries(names.map(name=>[name,hash(path.join(built.maps,name))]));
 const brandFile=path.join(built.root,'brand.json');fs.writeFileSync(brandFile,JSON.stringify({informationUrl:'https://example.org/info',socialLinks:[{label:'<script>social</script>',url:'https://example.org/social'}],landingUrl:'https://example.org/landing',configUrl:'https://example.org/config.json',revision:'</script><script>malicious()</script>'}));

@@ -1,4 +1,4 @@
 interface:
   display_name: "Arquinovatos - Rendering IMG 2 PBR"
-  short_description: "Mapas PBR revisados y después visor HTML automático"
+  short_description: "Mapas PBR, visor automático e historial local de materiales"
   default_prompt: "Usa $arquinovatos-rendering-img-2-pbr y dame el material de la superficie señalada en la foto adjunta."

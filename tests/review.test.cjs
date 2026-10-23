@@ -73,7 +73,7 @@ test('the delivered HTML preserves seven originals and includes six contrast var
   const label='Piedra </script><script>window.unwanted=1</script>';
   const prompts=path.join(f.root,'prompts.json'),literal="Material prompt </script> with literal $& and $` and $' instructions";
   fs.writeFileSync(prompts,JSON.stringify({'Material_BaseColor.png':{text:literal,exact:true,reference_roles:['Foto original']}}));
-  const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--name',label,'--prompts',prompts,'--output',f.output],{encoding:'utf8'});
+  const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--name',label,'--prompts',prompts,'--output',f.output,'--library',path.join(f.root,'.library')],{encoding:'utf8'});
   assert.equal(run.status,0,run.stderr);
   const html=fs.readFileSync(f.output,'utf8');
   const match=html.match(/window\.PBR_CASES = (.*);\n/);
@@ -98,13 +98,13 @@ test('the delivered HTML preserves seven originals and includes six contrast var
 test('an incomplete map set stops before writing a misleading complete viewer', async t => {
   assert.ok(fs.existsSync(builder), 'Self-contained review builder is not implemented');
   const f=await fixture(t); fs.unlinkSync(path.join(f.maps,'Material_AO.png'));
-  const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--output',f.output],{encoding:'utf8'});
+  const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--output',f.output,'--library',path.join(f.root,'.library')],{encoding:'utf8'});
   assert.notEqual(run.status,0); assert.ok(!fs.existsSync(f.output));
 });
 
 test('moving the complete result keeps local reveal attached to the moved files', async t => {
   const f=await fixture(t);
-  const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--output',f.output],{encoding:'utf8'});
+  const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--output',f.output,'--library',path.join(f.root,'.library')],{encoding:'utf8'});
   assert.equal(run.status,0,run.stderr);
   const manifest=JSON.parse(fs.readFileSync(path.join(f.root,'review-files.json'),'utf8'));
   for(const file of Object.values(manifest.files))assert.equal(path.isAbsolute(file),false,'Generated manifests should follow the result folder');

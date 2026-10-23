@@ -30,3 +30,12 @@ node_modules/
 
 # Synthetic test workspaces.
 tests/runtime/
+
+# Personal history and generated viewers never belong in the public skill.
+.historial/
+.historial.lock
+Biblioteca_PBR.html
+Material_PBR.html
+Iniciar_biblioteca.mjs
+Iniciar_visor.mjs
+review-files.json

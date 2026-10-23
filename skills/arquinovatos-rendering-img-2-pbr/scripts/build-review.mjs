@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {decodePNG} from './normal-opengl.mjs';
 import {exportVariants} from './export-variants.mjs';
+import {registerMaterial,defaultLibraryRoot} from './material-library.mjs';
 
 const readJSON=file=>JSON.parse(fs.readFileSync(file,'utf8').replace(/^\uFEFF/,''));
 const inlineJSON=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -44,7 +45,7 @@ function dataURL(file){
 
 export function buildReview(options,{variantExporter=exportVariants}={}){
   if(!options.maps||!options.photo||!options.output)throw Error('Faltan --maps, --photo o --output.');
-  const maps=fs.realpathSync(path.resolve(options.maps)),photo=fs.realpathSync(options.photo),output=path.resolve(options.output);
+  const maps=fs.realpathSync(path.resolve(options.maps)),photo=fs.realpathSync(options.photo),output=path.resolve(options.output),library=path.resolve(options.library||defaultLibraryRoot());
   if(!fs.statSync(maps).isDirectory())throw Error('--maps debe ser una carpeta.');
   if(path.extname(output).toLowerCase()!=='.html')throw Error('La salida del visor debe terminar en .html.');
   if(path.dirname(output)===maps)throw Error('Guarda el visor fuera de maps para conservar esa carpeta solo para los PNG.');
@@ -83,7 +84,9 @@ export function buildReview(options,{variantExporter=exportVariants}={}){
   for(const logo of ['logo-dark.png','logo-light.png'])html=html.replace('src="'+logo+'"',()=> 'src="'+dataURL(path.join(assets,logo))+'"');
   html=html.replace('<link rel="stylesheet" href="styles.css">',()=>'<style>\n'+fs.readFileSync(path.join(assets,'styles.css'),'utf8')+'\n</style>');
   html=html.replace(/\s*<script src="[^"]+" defer><\/script>/g,'');
-  let scripts='<script>window.PBR_CASES = '+inlineJSON(cases)+';\nwindow.PBR_BRAND = '+inlineJSON(brand)+';\n</script>\n';
+  const libraryRelative=path.relative(path.dirname(output),path.join(library,'Biblioteca_PBR.html'));
+  const libraryLink=path.isAbsolute(libraryRelative)?null:libraryRelative.split(path.sep).map(part=>encodeURIComponent(part)).join('/');
+  let scripts='<script>window.PBR_LIBRARY_LINK = '+inlineJSON(libraryLink)+';\nwindow.PBR_CASES = '+inlineJSON(cases)+';\nwindow.PBR_BRAND = '+inlineJSON(brand)+';\n</script>\n';
   for(const file of ['pbr-math.js','pbr-viewer.js','review.js'])scripts+='<script>\n'+fs.readFileSync(path.join(assets,file),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>\n';
   html=html.replace('</body>',()=>scripts+'</body>');
   fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,html,'utf8');
@@ -95,9 +98,11 @@ export function buildReview(options,{variantExporter=exportVariants}={}){
   const relative=file=>path.relative(path.dirname(output),file).split(path.sep).join('/');
   const relativeFiles=Object.fromEntries(Object.entries(files).map(([key,file])=>[key,relative(file)]));
   const manifest=path.join(path.dirname(output),'review-files.json');
-  fs.writeFileSync(manifest,JSON.stringify({html:path.basename(output),files:relativeFiles,mapsDirectory:{type:'directory',path:relative(maps),caseId:'01',entries:entries.map(map=>map.filename)}},null,2),'utf8');
+  fs.writeFileSync(manifest,JSON.stringify({name:cases[0].name,html:path.basename(output),files:relativeFiles,mapsDirectory:{type:'directory',path:relative(maps),caseId:'01',entries:entries.map(map=>map.filename)},library:{type:'library',path:relative(library)}},null,2),'utf8');
   const launcher=path.join(path.dirname(output),'Iniciar_visor.mjs');fs.copyFileSync(fileURLToPath(new URL('serve-review.mjs',import.meta.url)),launcher);
-  return {output,bytes:Buffer.byteLength(html),images:entries.length+1,map_files:entries.length,prompts_present:entries.filter(map=>map.prompt?.text&&!map.prompt.derived_from).length,manifest,launcher,exports};
+  fs.copyFileSync(fileURLToPath(new URL('material-library.mjs',import.meta.url)),path.join(path.dirname(output),'material-library.mjs'));
+  let history;try{history=registerMaterial({library,root:path.dirname(output),name:cases[0].name,html:output,status:'ready'});}catch(error){history={registered:false,error:error.message};}
+  return {output,bytes:Buffer.byteLength(html),images:entries.length+1,map_files:entries.length,prompts_present:entries.filter(map=>map.prompt?.text&&!map.prompt.derived_from).length,manifest,launcher,exports,library:history};
 }
 
 const isCLI=process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url);

@@ -5,14 +5,14 @@ Usa esta guía automáticamente después de aprobar los siete mapas base y entre
 ## Construcción
 
 ```text
-node <skill>/scripts/build-review.mjs --maps <caso>/maps --photo <referencia-usada> --prompts <caso>/work/prompts.json --name "Nombre del material" --output <caso>/Material_PBR.html
+node <skill>/scripts/build-review.mjs --maps <caso>/maps --photo <referencia-usada> --prompts <caso>/work/prompts.json --name "Nombre del material" --output <caso>/Material_PBR.html --library <biblioteca>
 ```
 
 Usa la misma referencia fotográfica que recibieron los agentes, aunque sea un recorte fiel. Conserva el original en el caso. El constructor incrusta los bytes de los siete mapas base y exporta automáticamente tres variantes de Roughness y tres de Specular en maps/. Si ya fueron exportadas, las comprueba sin alterar los originales. No hacen falta PBR Studio ni paquetes npm.
 
 Si el usuario pidió expresamente solo PNG, ejecuta `node <skill>/scripts/export-variants.mjs --maps <caso>/maps` después de aprobar las bases. Si un mapa tiene dos niveles de gris o menos y no admite una curva útil, conserva el original y comunica la excepción en el informe; no inventes detalle para completar nombres.
 
-La entrega principal es la **carpeta real maps/** con originales y variantes, no un ZIP. El HTML muestra los trece mapas en condiciones normales. El constructor también escribe Iniciar_visor.mjs, review-files.json y Foto_referencia.ext; conserva juntos esos archivos al mover el resultado.
+La entrega principal es la **carpeta real maps/** con originales y variantes, no un ZIP. El HTML muestra los trece mapas en condiciones normales. El constructor también escribe Iniciar_visor.mjs, material-library.mjs, review-files.json y Foto_referencia.ext; conserva juntos esos archivos al mover el resultado. Registra el resultado en la biblioteca local, añade su catálogo permanente y devuelve `library.registered`, `library.index` y `library.launcher`; verifica ese resultado según [library.md](library.md).
 
 ## Variantes de PBR Studio
 
@@ -31,6 +31,8 @@ node <caso>/Iniciar_visor.mjs
 Abre la URL loopback que devuelve en la misma computadora. **Abrir carpeta de mapas** abre directamente el directorio maps/ ya manifestado. Los menús Archivo siguen permitiendo seleccionar cada PNG en su carpeta. El acompañante solo acepta el origen y token de esta vista, y abre archivos o el único directorio incluidos en el manifiesto. No acepta rutas arbitrarias del navegador.
 
 Un HTML abierto directamente conserva material, galería y prompts; la acción de abrir carpeta necesita el acompañante. El usuario no debe instalar otro programa ni pedir un ZIP para acceder a los mapas.
+
+**Mis materiales** abre la biblioteca. **Abrir carpeta de este material** abre el caso completo y **Abrir carpeta de todos los materiales** abre la biblioteca principal; se mantiene además la acción de abrir maps/. Los materiales importados permanecen en su destino original y también se abren desde su ficha en el catálogo. En otra sesión, usa Biblioteca_PBR.html o Iniciar_biblioteca.mjs; no dependas de un puerto anterior.
 
 ## Marca y landing en vivo
 
