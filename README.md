@@ -12,19 +12,19 @@ Una carpeta local con siete mapas base PNG8: BaseColor, Normal DX y GL, Roughnes
 
 El albedo se revisa antes de crear los cinco derivados. Los agentes trabajan en paralelo según la capacidad disponible. La revisión distingue defectos visibles de advertencias numéricas; DX/GL se resuelve invirtiendo G sin otra generación. Las propiedades y escala son estimaciones fotográficas, no mediciones físicas. Para superficies opacas no metálicas.
 
-Con los mapas listos puedes elegir el visor HTML Arquinovatos. La plantilla incluida ofrece tres formas, controles de material, Original/Contraste 1/2/3 para Roughness y Specular, descarga de PNG, prompts copiables y **Abrir carpeta de mapas**. Este último abre la carpeta real mediante el iniciador local, sin ZIP.
+Después de revisar y entregar los PNG finales, la skill crea automáticamente el visor HTML Arquinovatos, sin pedir otra confirmación. Solo lo omite si pides expresamente únicamente PNG. En lotes, termina primero las imágenes de todos los casos y después crea los visores de los materiales aprobados. La plantilla incluida ofrece tres formas, controles de material, Original/Contraste 1/2/3 para Roughness y Specular, descarga de PNG, prompts copiables y **Abrir carpeta de mapas**. Este último abre la carpeta real mediante el iniciador local, sin ZIP.
 
 ## Requisitos
 
 - Agente con visión, generador de imágenes integrado, subagentes y acceso a archivos.
 - Node.js 18+ para los helpers, sin paquetes npm adicionales.
-- Navegador con WebGL para el visor opcional.
+- Navegador con WebGL para revisar el visor.
 
 Instalar la skill no añade capacidades que el agente no tenga. No requiere claves API ni PBR Studio instalado. Usa la ubicación personal de skills configurada en tu agente; conserva la carpeta completa. El [SKILL.md](skills/arquinovatos-rendering-img-2-pbr/SKILL.md) detalla el procedimiento y los límites.
 
 ## Carpeta y visor
 
-Los PNG se guardan directamente en maps/. El resultado incluye Material_PBR.html, Iniciar_visor.mjs, review-files.json y la foto de referencia. Para abrir carpetas desde el visor, el agente inicia `node Iniciar_visor.mjs` y abre su dirección local. Puedes mover el resultado conservando esa carpeta completa.
+Los PNG se guardan directamente en maps/. El resultado incluye Material_PBR.html, Iniciar_visor.mjs, review-files.json y la foto de referencia, salvo que hayas pedido solo PNG. Si una limitación técnica impide construir o revisar el HTML, conserva los PNG aprobados e informa el impedimento. Para abrir carpetas desde el visor, el agente inicia `node Iniciar_visor.mjs` y abre su dirección local. Puedes mover el resultado conservando esa carpeta completa.
 
 El material y sus controles funcionan sin Internet. Redes, WhatsApp y la landing se cargan mediante la configuración pública y la página remota vigentes de Arquinovatos. La landing se muestra después de los mapas; su HTML no se copia en este repositorio ni dentro del material. Esa integración no recibe fotos, mapas, prompts ni rutas locales.
 

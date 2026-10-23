@@ -1,6 +1,6 @@
 # Construir el visor y entregar la carpeta
 
-Usa esta guía cuando los siete mapas base estén aprobados y el usuario haya elegido el HTML. No regeneres imágenes ni escribas otra interfaz. La plantilla conserva el probador, las tres formas, controles, temas y prompts.
+Usa esta guía automáticamente después de aprobar los siete mapas base y entregar los PNG finales. No preguntes si debe construirse el HTML; omítelo únicamente si el usuario pidió expresamente solo PNG. No regeneres imágenes ni escribas otra interfaz. La plantilla conserva el probador, las tres formas, controles, temas y prompts.
 
 ## Construcción
 
@@ -10,7 +10,7 @@ node <skill>/scripts/build-review.mjs --maps <caso>/maps --photo <referencia-usa
 
 Usa la misma referencia fotográfica que recibieron los agentes, aunque sea un recorte fiel. Conserva el original en el caso. El constructor incrusta los bytes de los siete mapas base y exporta automáticamente tres variantes de Roughness y tres de Specular en maps/. Si ya fueron exportadas, las comprueba sin alterar los originales. No hacen falta PBR Studio ni paquetes npm.
 
-Para entregar solo PNG, ejecuta `node <skill>/scripts/export-variants.mjs --maps <caso>/maps` después de aprobar las bases. Si un mapa tiene dos niveles de gris o menos y no admite una curva útil, conserva el original y comunica la excepción en el informe; no inventes detalle para completar nombres.
+Si el usuario pidió expresamente solo PNG, ejecuta `node <skill>/scripts/export-variants.mjs --maps <caso>/maps` después de aprobar las bases. Si un mapa tiene dos niveles de gris o menos y no admite una curva útil, conserva el original y comunica la excepción en el informe; no inventes detalle para completar nombres.
 
 La entrega principal es la **carpeta real maps/** con originales y variantes, no un ZIP. El HTML muestra los trece mapas en condiciones normales. El constructor también escribe Iniciar_visor.mjs, review-files.json y Foto_referencia.ext; conserva juntos esos archivos al mover el resultado.
 
@@ -44,4 +44,4 @@ Después de todos los mapas aparece un iframe con la landing remota vigente. Dis
 
 Muestra solo nombres, etiquetas, acciones y mensajes operativos necesarios. Las observaciones de QA, calibración y limitaciones se guardan en work/ y en el informe de entrega; no añadas revisión visible, avisos experimentales ni párrafos sobre cómo se incrustan los archivos.
 
-En cada material comprueba la construcción, carpeta y apertura con WebGL. No repitas una batería de todos los controles si la plantilla no cambió. Al cambiar la plantilla, comprueba las funciones afectadas y una vista de escritorio/móvil en una pasada acotada. Preserva prompts literales, hashes y registros de imágenes originales. Publicar fotos o resultados sigue requiriendo solicitud expresa; el repositorio público contiene la skill, no los materiales privados.
+En cada material comprueba la construcción, carpeta y apertura con WebGL. Si una limitación técnica impide construirlo o abrirlo, conserva los PNG aprobados, registra e informa la causa concreta y no declares revisado un HTML que no abriste. No repitas una batería de todos los controles si la plantilla no cambió. Al cambiar la plantilla, comprueba las funciones afectadas y una vista de escritorio/móvil en una pasada acotada. Preserva prompts literales, hashes y registros de imágenes originales. Publicar fotos o resultados sigue requiriendo solicitud expresa; el repositorio público contiene la skill, no los materiales privados.

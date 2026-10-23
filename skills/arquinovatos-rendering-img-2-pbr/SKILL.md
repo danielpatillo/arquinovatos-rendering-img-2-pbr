@@ -2,7 +2,7 @@
 name: arquinovatos-rendering-img-2-pbr
 description: >-
   Convierte una fotografía y un material señalado en seis tipos de mapas PBR,
-  revisa costuras y después ofrece un visor HTML opcional con controles y prompts
+  revisa costuras y después crea automáticamente un visor HTML con controles y prompts
   copiables. Usa el generador integrado de Codex y subagentes: corrige el albedo
   en bucle hasta aprobarlo y continúa con cinco derivados en paralelo.
   Para superficies opacas no metálicas.
@@ -10,7 +10,7 @@ description: >-
 
 # Arquinovatos - Rendering IMG 2 PBR
 
-Recibe **una fotografía** y entrega primero **seis tipos de mapas PBR revisados**. Son siete PNG: el Normal se entrega en DX y OpenGL. Solo después ofrece construir el **visor HTML opcional**, usando la plantilla incluida. El usuario puede identificar el material en el mismo mensaje. Los seis mapas base se generan mediante subagentes; la convención Normal opuesta se obtiene invirtiendo exactamente G mediante código.
+Recibe **una fotografía** y entrega primero **seis tipos de mapas PBR revisados**. Son siete PNG: el Normal se entrega en DX y OpenGL. Después de los resultados finales crea automáticamente el **visor HTML**, usando la plantilla incluida, sin preguntar si debe construirlo ni esperar otro mensaje. Respeta una petición expresa de entregar solo PNG. El usuario puede identificar el material en el mismo mensaje. Los seis mapas base se generan mediante subagentes; la convención Normal opuesta se obtiene invirtiendo exactamente G mediante código.
 
 La revisión es **práctica y proporcional**: acepta el Normal origen en DX **o** OpenGL y obtén la otra convención invirtiendo G. No gastes generaciones para forzar Y, una longitud vectorial perfecta o un número de gris orientativo. Conserva como advertencias las limitaciones menores; bloquea defectos visibles o de significado material según [quality.md](references/quality.md).
 
@@ -24,15 +24,15 @@ La petición de usar la skill desde su enlace incluye cargar su `SKILL.md`, inst
 
 Comprueba visión, generador de imágenes **integrado de Codex**, subagentes que tengan ese generador y acceso a los archivos. Usa las herramientas y firmas reales de la sesión, que pueden variar entre clientes. Si falta una capacidad, explica cuál falta y detén la generación. No sustituyas el flujo por APIs, otro proveedor, imágenes de stock, código que dibuje texturas ni ejecución sin subagentes. No solicites claves API ni cambies configuraciones globales. Instalar la skill no habilita capacidades ausentes.
 
-Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coordinador salvo indicación expresa del usuario. Los diagnósticos de costuras y el constructor usan Node.js 18+, incluido el runtime de Codex cuando exista; no necesitan paquetes npm. Si falta y el encargo autoriza preparar requisitos, descarga un runtime portátil desde nodejs.org al espacio de trabajo y verifica su checksum oficial, sin cambiar PATH ni instalaciones globales. Si no puedes realizar la revisión, conserva los candidatos e informa que aún no están aprobados. WebGL y navegador solo hacen falta si el usuario elige el visor. Instalar esta skill no añade herramientas integradas ausentes.
+Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coordinador salvo indicación expresa del usuario. Los diagnósticos de costuras y el constructor usan Node.js 18+, incluido el runtime de Codex cuando exista; no necesitan paquetes npm. Si falta y el encargo autoriza preparar requisitos, descarga un runtime portátil desde nodejs.org al espacio de trabajo y verifica su checksum oficial, sin cambiar PATH ni instalaciones globales. Si no puedes realizar la revisión, conserva los candidatos e informa que aún no están aprobados. WebGL y navegador hacen falta para revisar el visor después de terminar los mapas. Instalar esta skill no añade herramientas integradas ausentes.
 
 ## Orden y continuidad del encargo
 
-Sigue **mapas → revisión → entrega de PNG → elección de HTML**. Durante la fase de imágenes no construyas páginas, servidores, instaladores del visor ni pruebas de interfaz. La plantilla ya está programada; no necesita diseño ni código nuevo por material.
+Sigue **mapas → revisión → entrega de PNG finales → construcción automática del HTML**. No preguntes si debe crearse el visor al terminar los mapas. Durante la fase de imágenes no construyas páginas, servidores, instaladores del visor ni pruebas de interfaz. La plantilla ya está programada; no necesita diseño ni código nuevo por material.
 
-Mantén `work/progress.json` con casos, material, referencia, fase, historial, maestro/hash, mapas pendientes/aprobados y elección del visor (`pending`, `skip` o `build`). El coordinador preasigna destinos y actualiza este resumen al distribuir y recoger resultados; los agentes conservan los registros de cada intento y sus tiempos en carpetas exclusivas. Una corrección derivada ya autorizada no espera una actualización o un mensaje administrativo del coordinador. Léelo al retomar y antes de responder; no olvides materiales pendientes.
+Mantén `work/progress.json` con casos, material, referencia, fase, historial, maestro/hash, mapas pendientes/aprobados y estado del visor. Conserva `viewer_choice` por compatibilidad: `build` por defecto, `skip` solo si el usuario pide expresamente solo PNG; un `pending` antiguo no exige otra pregunta. Registra la construcción como pendiente hasta aprobar y entregar los PNG finales, y después como construida o bloqueada por una limitación técnica concreta. El coordinador preasigna destinos y actualiza este resumen al distribuir y recoger resultados; los agentes conservan los registros de cada intento y sus tiempos en carpetas exclusivas. Una corrección derivada ya autorizada no espera una actualización o un mensaje administrativo del coordinador. Léelo al retomar y antes de responder; no olvides materiales pendientes.
 
-En un lote, realiza primero la fase de imágenes de todos los casos y después pregunta una vez por los visores de los materiales aprobados. No interrumpas el lote para construir o probar el HTML del primero. Un caso bloqueado conserva sus candidatos y no impide procesar los otros; nunca ofrezcas como listo el caso fallido.
+En un lote, realiza primero la fase de imágenes de todos los casos y después crea automáticamente los visores de los materiales aprobados. No interrumpas el lote para construir o probar el HTML del primero. Un caso bloqueado conserva sus candidatos y no impide procesar los otros; nunca ofrezcas como listo el caso fallido.
 
 ## 1. Identificar el material
 
@@ -93,7 +93,7 @@ Cada agente lee y ejecuta el prompt correspondiente:
 
 Asigna destinos exclusivos. Ningún agente modifica el albedo u otros mapas. El coordinador reúne los resultados. Si el usuario pide procesar varias fotos, repite la unidad de una foto a seis mapas por caso, con maestros y carpetas independientes.
 
-Cada agente registra **el texto efectivo pasado al generador**, las dos referencias y sus roles, y su revisión con hash conforme a [quality.md](references/quality.md). Reúne los prompts en `work/prompts.json`, una entrada por nombre final con `text` y `exact: true` cuando proceda. Si una corrección produce el mapa retenido, registra esa llamada; conserva intentos anteriores separados. No reconstruyas un prompt perdido como si fuera literal. Estos registros se guardan aunque el usuario omita HTML.
+Cada agente registra **el texto efectivo pasado al generador**, las dos referencias y sus roles, y su revisión con hash conforme a [quality.md](references/quality.md). Reúne los prompts en `work/prompts.json`, una entrada por nombre final con `text` y `exact: true` cuando proceda. Si una corrección produce el mapa retenido, registra esa llamada; conserva intentos anteriores separados. No reconstruyas un prompt perdido como si fuera literal. Estos registros se guardan también cuando el usuario pide expresamente solo PNG.
 
 El agente de Normal ejecuta `pbr-qa.mjs prepare --map normal --normal-source directx|opengl` sobre su salida real. Produce la pareja mediante G = 255 − G, conservando R/B, tamaño y 8 bits. El conversor `normal-opengl.mjs` también sirve en ambos sentidos. No hay otra generación, contraste, gamma ni renormalización artística. Si cambia el origen, reconvierte el opuesto. Registra la convención pedida y si fue verificada; el archivo calculado lleva `derived_from` y el prompt literal del origen. No inventes otra llamada ni afirmes que siempre se generó primero DX.
 
@@ -113,11 +113,11 @@ Con los siete mapas base aprobados, ejecuta `node <skill>/scripts/export-variant
 
 Entrega la **carpeta local `maps/` con los trece PNG**: siete base y seis variantes de contraste. Enlaza la carpeta real; un ZIP es adicional solo si se solicita y no sustituye esa carpeta. Selecciones, recortes y diagnósticos permanecen en `work/`. Informa dimensiones, bits, canales reales y alcance de la revisión en la entrega y registros, sin llenar el visor de notas técnicas. «Sin costuras visibles en las pruebas realizadas» no es una certificación matemática ni un bake físico.
 
-**Ahora pregunta:** «Los mapas están listos y revisados. ¿Quieres crear el visor HTML Arquinovatos o terminar solo con los PNG?». Usa una pregunta con las opciones **Crear visor HTML** y **Omitir HTML**, si la sesión ofrece esa herramienta. Guarda `pending` y espera la elección; el silencio no autoriza construir. Si omite, guarda `skip` y termina. Si ya eligió expresamente para esta ejecución, respeta esa elección sin otra confirmación. Una elección de HTML nunca adelanta su construcción a la revisión de imágenes.
+**Continúa automáticamente con el visor HTML después de entregar los PNG finales**, sin pedir confirmación ni esperar otro mensaje. Guarda `viewer_choice: "build"` y pasa al paso 6 en el mismo encargo. Solo una petición expresa del usuario de entregar únicamente PNG guarda `skip` y omite el visor. Un conjunto sin aprobar sigue bloqueando su construcción. Si una limitación técnica impide construirlo o revisarlo, conserva los PNG aprobados y registra e informa ese impedimento concreto.
 
-## 6. Construir el visor solo si se elige
+## 6. Construir el visor automáticamente después de los resultados finales
 
-Con la elección `build`, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. Usa la plantilla de `assets/review/`, descargada con la skill desde GitHub: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, trece PNG y los dos logos incrustados sin modificar los originales. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
+Después de aprobar y entregar los PNG finales, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. No vuelvas a preguntar por el HTML. Usa la plantilla de `assets/review/`, descargada con la skill desde GitHub: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, trece PNG y los dos logos incrustados sin modificar los originales. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
 
 Los selectores de **Roughness y Specular** incluyen Original y Contraste 1/2/3, con las recetas correspondientes de PBR Studio. Permiten probar y descargar cada variante a resolución completa; no requieren otras generaciones de IA. Los deslizadores siguen ajustando solo la vista previa. **Abrir carpeta de mapas** abre el directorio real con todos los originales y variantes.
 
