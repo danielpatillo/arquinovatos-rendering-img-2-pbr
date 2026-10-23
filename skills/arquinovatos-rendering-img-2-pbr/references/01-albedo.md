@@ -62,11 +62,15 @@ Create a texture that repeats continuously in both U and V.
 
 Maintain structural and color continuity across opposite edges and all four corners. Avoid visible seams, mirrored motifs, repeated patch boundaries, and edge-specific brightness changes.
 
+For a regular tiled floor, prefer complete slab modules with a physical grout joint crossing the texture boundary: each opposite edge carries half of that joint, so the combined joint resembles the interior joints. Do not omit the boundary joint and accidentally create double-width slabs on repetition. This is physical grout, not a decorative frame. Do not impose an exact module count, fractional joint positions or pixel widths unless the task or reference requires them; nominal coverage is not a measured tile size.
+
 Distribute natural variation evenly enough to reduce obvious repetition.
 
 Inspect a 3 × 3 tiled preview and a half-width/half-height offset view using the included diagnostic tool. Correct observed discontinuities with the integrated image generator, then diagnose and inspect the new candidate. Repeat this cycle until the coordinator approves the albedo; there is no fixed correction count and no user confirmation between iterations. Stop only for actual cancellation or a technical/resource condition preventing generation or inspection, and report the interruption without approving the image.
 
 Do not include those diagnostic views in the final image or claim to have performed checks that were not actually executed.
+
+Use the bundled pbr-qa.mjs preparation instead of writing per-project analysis scripts. Inspect a detailed joint crop only when a concrete ambiguity remains; a numerical profile difference without a visible extra seam is not a reason to seek pixel-perfect grout.
 
 ## 7. Output Specifications
 

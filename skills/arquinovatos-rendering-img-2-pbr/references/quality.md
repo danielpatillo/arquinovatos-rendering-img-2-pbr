@@ -1,39 +1,48 @@
-# Revisión de imágenes antes del visor
+# Revisión práctica de los mapas
 
-La prioridad es aceptar un buen albedo antes de gastar llamadas en derivados. Cada agente revisa el archivo que produce; la evidencia se guarda fuera de `maps/`. No necesitas construir HTML ni abrir un navegador para este control.
+Revisa si el material es utilizable y representa la propiedad pedida. No confundas una estimación artística con una medición de laboratorio. El resultado puede aprobarse con advertencias explícitas; no debe ocultar un defecto visual real.
 
-## Diagnóstico reutilizable
+## Una preparación y una revisión por candidato
 
-Con el runtime Node.js disponible, ejecuta el script incluido, sin paquetes externos:
+Usa el helper incluido en vez de escribir scripts de formato, histogramas, vectores y previsualizaciones en cada encargo:
 
-```text
-node <skill>/scripts/check-seams.mjs --input <mapa.png> --output <resultado>/work/qa/<nombre-mapa>
-```
+    node <skill>/scripts/pbr-qa.mjs prepare --input <salida-real.png> --map roughness --output <caso>/work/roughness/attempt-001
 
-Produce `repeat-3x3.png`, `offset-half.png` y `seams.json`. Usa todos los píxeles nativos para las métricas; limita cada repetición de la previsualización a 512 px para revisar rápido. El desplazamiento lleva las uniones al centro. No modifica ni corrige el mapa original, ni genera HTML. Admite PNG gris/RGB/RGBA de 8 bits sin entrelazado.
+Mapas admitidos: albedo, normal, roughness, ao, specular, height. Para Normal añade --normal-source directx u opengl, según la convención solicitada o identificada en esa llamada. La inversión de Y es reversible: el helper conserva la salida original y produce la pareja mediante G = 255 − G, sin otra generación.
 
-El informe compara el salto entre bordes con las transiciones del interior. Marca saltos atípicos en U/V, pero **no aprueba seamless automáticamente**. Bordes de igual valor pueden esconder un marco, juntas rotas o repetición obvia. Su código de salida indica que el diagnóstico pudo ejecutarse, no que el mapa esté aprobado. Revisa visualmente ambas imágenes y el mapa nativo; amplía detalles cuando la reducción oculte el defecto.
+El helper conserva original.png, prepara candidate.png, registra formato/conversión/hash en qa.json, genera qa/seams.json, repetición y desplazamiento, y deja review.json pendiente de revisión visual. qa/contact-sheet.png reúne repetición a la izquierda, candidato arriba a la derecha y desplazamiento debajo. Inspecciona esa hoja y la imagen nativa que ya devolvió el generador; no vuelvas a cargar lo ya visto salvo duda concreta. Amplía solo la unión o rasgo dudoso si la reducción no lo resuelve.
 
-## Qué aceptar
+La conversión de RGB casi gris a escalar está autorizada como round((R+G+B)/3), sin gamma, contraste ni remuestreo. Se conserva el original y se declaran diferencias de canales. Mucha cromaticidad exige revisar si realmente se generó un mapa escalar; convertirlo no valida su significado. Toda conversión precede a QA y al hash retenido.
 
-- Continuidad visible de forma, color/valor, grano y juntas en U, V y esquinas. Sin marco, franjas repetidas, juntas cortadas, duplicaciones ni cambio de iluminación en las uniones.
-- Albedo reconocible respecto a la foto, ortográfico y sin luces, reflejos, sombras o AO horneados. El albedo defectuoso bloquea todos sus derivados.
-- Derivados registrados con el maestro: juntas y rasgos identificables en las mismas posiciones. Compara con el albedo; una misma resolución no prueba registro.
-- Datos coherentes con su propósito, según [delegation.md](delegation.md). No confundas pigmentos con relieve, sombra con AO ni brillo con roughness. En un piso plano, Normal/Height deben conservar un relieve prudente.
-- Siete PNG íntegros, cuadrados y con dimensiones comunes. GL conserva R/B del DX y únicamente invierte G.
+## Qué bloquea y qué se documenta
 
-Los flags numéricos requieren inspección y explicación. Si hay una costura real, una junta rota o un error crítico del mapa, no lo apruebes. Si el diagnóstico no es suficiente, registra la revisión pendiente; no inventes un resultado favorable.
+**Bloquea:** archivo ilegible, dimensiones incompatibles, transparencia indebida, costura o marco claramente visible, juntas rotas/dobladas, registro visiblemente incorrecto, iluminación fotográfica copiada o error que cambie el significado del mapa: Height con juntas salientes, Roughness como albedo gris, AO con sombras/pigmentos, Normal como imagen coloreada sin estructura direccional, Specular como glossiness/Metallic.
 
-## Evidencia y correcciones
+**Se documenta sin bloquear por sí solo:**
 
-Cada agente guarda junto al diagnóstico `review.json` con `sha256`, `approved`, `repeatReviewed`, `offsetReviewed`, `registrationReviewed` y `issues`. Incluye el motivo de cualquier alerta numérica que se haya descartado tras inspección. El coordinador comprueba hashes y resultados; solo reinspecciona fallos, incertidumbres o evidencia ausente.
+- Baselines, intervalos y números de gris sugeridos en prompts. No son valores medidos. Un Specular distinto de 128 o un AO distinto de una guía no demuestra que el mapa sea incorrecto.
+- Desviaciones de longitud de vectores, pequeñas asimetrías de perfiles o diferencias de uno o pocos píxeles sin artefacto visible relevante. No exijas un bake matemático a una generación artística.
+- Alertas de salto U/V dentro de una junta física. Revisa si hay una franja adicional visible; la métrica por sí sola no aprueba ni rechaza.
+- Convención Y del Normal. DX y OpenGL son igualmente admisibles; producir la opuesta invirtiendo G resuelve esa diferencia. No regeneres para forzar una de ellas.
 
-**Albedo:** genera o corrige, ejecuta el diagnóstico e inspecciona el mapa nativo, la repetición y el desplazamiento. Si no cumple, registra los defectos y vuelve a corregir con el generador integrado y las referencias reales. Repite hasta aprobarlo, sin un máximo fijo de intentos y sin pedir confirmación al usuario. No hagas otra generación si ya cumple. Guarda cada intento por separado con su prompt literal, referencias, hash, diagnósticos y `review.json`; el coordinador mantiene el historial en `work/progress.json`. Si se repite el mismo defecto, ajusta la corrección a lo observado en vez de repetir el mismo prompt. No maquilles la revisión ni uses código para reparar los píxeles.
+No conviertas una advertencia en defecto crítico por incumplir un número que añadió el coordinador. Para bloquear por intensidad o contraste, describe el efecto visible o la interpretación material injustificada, no solo la distancia respecto de la guía. Tampoco rebajes un defecto visible real para terminar.
 
-Al aprobar el albedo, fija el maestro y **arranca automáticamente los cinco derivados**, sin otro mensaje del usuario. El bucle solo se interrumpe por cancelación, cuota agotada, generador inaccesible, un error que impida continuar o imposibilidad de revisar; conserva los candidatos y explica el impedimento, sin simular una aprobación.
+## Evidencia mínima
 
-**Derivados:** una corrección dirigida por mapa, únicamente para defectos observados; no hagas un segundo intento si el primero está bien. Vuelve a adjuntar albedo maestro y foto. Ejecuta el diagnóstico sobre el archivo retenido y actualiza su prompt literal y revisión. Si persiste un defecto crítico tras esa corrección, conserva los candidatos e informa que el material todavía no está aprobado. No mezcles un diagnóstico antiguo con un archivo nuevo.
+En la **raíz del intento**, completa review.json con sha256 del candidato retenido, approved, status, repeatReviewed, offsetReviewed, registrationReviewed, issues y warnings. Usa status "approved" o "approved_with_warnings" junto con approved:true cuando corresponda. issues contiene impedimentos reales; warnings, estimaciones y límites.
 
-No continúes derivados desde un albedo con costuras ni ofrezcas el visor como siguiente paso de un material no aprobado. Un albedo de «QA parcial» no termina satisfactoriamente el bucle. Si un defecto del maestro aparece durante la revisión de los derivados, vuelve al bucle de albedo e invalida esos derivados.
+No afirmes coincidencia exacta por píxel ni recuperación física. El agente es dueño de la revisión de su mapa; el coordinador comprueba hashes y solo reinspecciona defectos, incertidumbres o evidencia ausente. Una reevaluación conserva el dictamen anterior y explica la nueva decisión; no cambia píxeles a escondidas.
 
-La aceptación comunica **ausencia de costuras visibles en las comprobaciones realizadas**, sin prometer continuidad matemática, recuperación física exacta ni calidad garantizada por el generador.
+## Correcciones sin pausas administrativas
+
+**Albedo:** bucle hasta aprobar o interrupción técnica real, como pide SKILL.md. El agente prepara el candidato y sus diagnósticos; el coordinador decide una sola vez por intento. Si un problema se repite sin mejora, cambia la estrategia en lugar de insistir con el mismo prompt. No lances derivados desde un albedo pendiente.
+
+**Derivados:** el encargo ya autoriza una corrección dirigida por defecto crítico. El agente conserva el intento anterior, registra el motivo y corrige sin esperar un mensaje del coordinador. No gastes esa llamada por una advertencia numérica, el contenedor gris o la convención Y. Si el defecto crítico persiste, conserva pendiente y explica el impedimento; no sustituyas el trabajo por un placeholder.
+
+## Comprobación final, una vez
+
+El coordinador reúne work/reviews.json como un objeto por nombre final, con review relativo al caso. El Normal invertido lleva derived_from con el nombre del Normal origen y comparte su revisión. Ejecuta:
+
+    node <skill>/scripts/pbr-qa.mjs verify-set --root <caso>
+
+Comprueba siete PNG, formato, dimensiones, hashes/revisiones y G invertida exactamente. Las advertencias no invalidan el conjunto. La aprobación visual sigue siendo necesaria: la integridad de archivos no demuestra continuidad ni propiedades físicas. Entrega con el alcance real: «sin costuras visibles en las comprobaciones realizadas», o declara la advertencia concreta si se aceptó una limitación menor.

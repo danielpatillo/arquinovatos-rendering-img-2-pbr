@@ -11,8 +11,7 @@ const mathFile = path.join(skill, 'assets/review/pbr-math.js');
 const math = fs.existsSync(mathFile) ? require(mathFile) : {};
 const builder = path.join(skill, 'scripts/build-review.mjs');
 const names = ['Material_BaseColor.png','Material_Normal_DX.png','Material_Normal_GL.png','Material_Roughness.png','Material_AO.png','Material_Specular_UE.png','Material_Height.png'];
-// Hand-checked, public-domain 1x1 PNG fixture; no user photograph is distributed.
-const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0aUAAAAASUVORK5CYII=', 'base64');
+const codec = import(pathToFileURL(path.join(skill,'scripts/normal-opengl.mjs')));
 
 test('specular follows UE dielectric F0 rather than treating the map as reflectance', () => {
   assert.equal(typeof math.uniforms, 'function', 'PBR controls are not implemented');
@@ -50,17 +49,27 @@ test('UV tiling is bounded and the rounded cube carries finite orthogonal surfac
   assert.ok(Math.max(...mesh.indices)<mesh.vertices.length/11);
 });
 
-function fixture(t) {
+async function fixture(t) {
+  const {encodePNG} = await codec;
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'arquinovatos-review-'));
   t.after(() => fs.rmSync(root, {recursive:true,force:true}));
   const maps = path.join(root,'maps'); fs.mkdirSync(maps);
-  for (const name of names) fs.writeFileSync(path.join(maps,name),png);
-  const photo = path.join(root,'photo.png'); fs.writeFileSync(photo,png);
-  return {root,maps,photo,output:path.join(root,'Material_PBR.html')};
+  const scalar=Buffer.from(Array.from({length:16},(_,i)=>100+i*6));
+  const rgb=Buffer.from(Array.from(scalar).flatMap(v=>[v,v+5,v+10]));
+  const images={};
+  for (const name of names) {
+    const channels=/BaseColor|Normal/.test(name)?3:1;
+    images[name]=encodePNG({width:4,height:4,channels,data:channels===3?rgb:scalar});
+    fs.writeFileSync(path.join(maps,name),images[name]);
+  }
+  const photoBytes=encodePNG({width:4,height:4,channels:3,data:rgb});
+  const photo = path.join(root,'photo.png'); fs.writeFileSync(photo,photoBytes);
+  return {root,maps,photo,images,photoBytes,output:path.join(root,'Material_PBR.html')};
 }
-test('the delivered HTML carries the photo, seven maps, branding and exact prompts', t => {
+
+test('the delivered HTML preserves seven originals and includes six contrast variants and exact prompts', async t => {
   assert.ok(fs.existsSync(builder), 'Self-contained review builder is not implemented');
-  const f=fixture(t);
+  const f=await fixture(t);
   const label='Piedra </script><script>window.unwanted=1</script>';
   const prompts=path.join(f.root,'prompts.json'),literal="Material prompt </script> with literal $& and $` and $' instructions";
   fs.writeFileSync(prompts,JSON.stringify({'Material_BaseColor.png':{text:literal,exact:true,reference_roles:['Foto original']}}));
@@ -70,7 +79,7 @@ test('the delivered HTML carries the photo, seven maps, branding and exact promp
   const match=html.match(/window\.PBR_CASES = (.*);\n/);
   assert.ok(match,'A usable data payload must be present');
   const data=JSON.parse(match[1]);
-  assert.equal(data.length,1); assert.equal(data[0].maps.length,7);
+  assert.equal(data.length,1); assert.equal(data[0].maps.length,13);
   assert.equal(data[0].name,label);
   assert.equal(data[0].maps[0].prompt.text,literal);
   assert.equal(data[0].maps[0].prompt.exact,true);
@@ -78,22 +87,23 @@ test('the delivered HTML carries the photo, seven maps, branding and exact promp
   assert.equal(data[0].maps[1].prompt,null,'A missing prompt must not be invented');
   for(const item of [{src:data[0].photo},...data[0].maps]) {
     assert.match(item.src,/^data:image\/png;base64,/);
-    assert.deepEqual(Buffer.from(item.src.split(',')[1],'base64'),png);
+    assert.deepEqual(Buffer.from(item.src.split(',')[1],'base64'),item.filename?fs.readFileSync(path.join(f.maps,item.filename)):f.photoBytes);
   }
   assert.ok(!html.includes(label),'Raw closing script tags must not enter the HTML');
   assert.ok(!html.includes(f.root),'Local author paths must not leak into the portable file');
   assert.ok(!/<script[^>]+src=|<link[^>]+stylesheet/i.test(html),'The file must not require local JS/CSS siblings');
-  assert.equal(fs.readdirSync(f.maps).length,7,'Review generation must not add files to maps');
+  assert.equal(fs.readdirSync(f.maps).length,13,'Originals and six variants belong in the real maps folder');
+  for(const name of names)assert.deepEqual(fs.readFileSync(path.join(f.maps,name)),f.images[name]);
 });
-test('an incomplete map set stops before writing a misleading complete viewer', t => {
+test('an incomplete map set stops before writing a misleading complete viewer', async t => {
   assert.ok(fs.existsSync(builder), 'Self-contained review builder is not implemented');
-  const f=fixture(t); fs.unlinkSync(path.join(f.maps,'Material_AO.png'));
+  const f=await fixture(t); fs.unlinkSync(path.join(f.maps,'Material_AO.png'));
   const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--output',f.output],{encoding:'utf8'});
   assert.notEqual(run.status,0); assert.ok(!fs.existsSync(f.output));
 });
 
 test('moving the complete result keeps local reveal attached to the moved files', async t => {
-  const f=fixture(t);
+  const f=await fixture(t);
   const run=spawnSync(process.execPath,[builder,'--maps',f.maps,'--photo',f.photo,'--output',f.output],{encoding:'utf8'});
   assert.equal(run.status,0,run.stderr);
   const manifest=JSON.parse(fs.readFileSync(path.join(f.root,'review-files.json'),'utf8'));
@@ -113,5 +123,5 @@ test('moving the complete result keeps local reveal attached to the moved files'
   }
   assert.equal(revealed[0],path.join(after,'maps','Material_BaseColor.png'));
   assert.equal(path.dirname(revealed[1]),after);
-  assert.deepEqual(fs.readFileSync(revealed[1]),png,'The portable photo must preserve the original bytes');
+  assert.deepEqual(fs.readFileSync(revealed[1]),f.photoBytes,'The portable photo must preserve the original bytes');
 });

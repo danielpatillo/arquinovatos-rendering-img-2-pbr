@@ -10,7 +10,15 @@ description: >-
 
 # Arquinovatos - Rendering IMG 2 PBR
 
-Recibe **una fotografía** y entrega primero **seis tipos de mapas PBR revisados**. Son siete PNG: el Normal se entrega en DX y OpenGL. Solo después ofrece construir el **visor HTML opcional**, usando la plantilla incluida. El usuario puede identificar el material en el mismo mensaje. Los seis mapas base se generan mediante subagentes; OpenGL se deriva exactamente del DX mediante código.
+Recibe **una fotografía** y entrega primero **seis tipos de mapas PBR revisados**. Son siete PNG: el Normal se entrega en DX y OpenGL. Solo después ofrece construir el **visor HTML opcional**, usando la plantilla incluida. El usuario puede identificar el material en el mismo mensaje. Los seis mapas base se generan mediante subagentes; la convención Normal opuesta se obtiene invirtiendo exactamente G mediante código.
+
+La revisión es **práctica y proporcional**: acepta el Normal origen en DX **o** OpenGL y obtén la otra convención invirtiendo G. No gastes generaciones para forzar Y, una longitud vectorial perfecta o un número de gris orientativo. Conserva como advertencias las limitaciones menores; bloquea defectos visibles o de significado material según [quality.md](references/quality.md).
+
+## Pedirlo en una frase
+
+Con una foto adjunta basta: **«Con la skill https://arquinovatos.com/PBR2IMG dame el material de [superficie]»**. La ruta pública redirige a esta skill en GitHub; también admite su enlace directo. No hagas que el usuario copie un procedimiento de instalación, requisitos, delegación o revisión en su mensaje.
+
+La petición de usar la skill desde su enlace incluye cargar su `SKILL.md`, instalarla o actualizarla en la ubicación personal que admita el agente y usarla en este mismo encargo. Resuelve el enlace y conserva la carpeta completa de instrucciones, scripts y plantilla; compara la versión pública antes de reemplazar una instalación existente y respeta cambios locales del usuario. No sobrescribas resultados anteriores. Instalar no añade capacidades ausentes: comprueba las del entorno y continúa con las disponibles según esta skill. La instalación no requiere que el usuario vuelva a pegar la solicitud larga.
 
 ## Capacidades necesarias
 
@@ -22,7 +30,7 @@ Usa subagentes nativos, no chats separados. Hereda modelo y razonamiento del coo
 
 Sigue **mapas → revisión → entrega de PNG → elección de HTML**. Durante la fase de imágenes no construyas páginas, servidores, instaladores del visor ni pruebas de interfaz. La plantilla ya está programada; no necesita diseño ni código nuevo por material.
 
-Mantén `work/progress.json` con la lista de casos del encargo y, para cada uno, material, foto o recorte, fase, intento actual de albedo, historial de intentos y revisiones, albedo maestro y hash, mapas pendientes/aprobados y elección del visor (`pending`, `skip` o `build`). Solo el coordinador actualiza ese estado antes y después de cada intento y al cambiar de fase. Léelo al retomar y antes de responder: un cambio de turno o compactación no termina el encargo ni permite olvidar materiales pendientes.
+Mantén `work/progress.json` con casos, material, referencia, fase, historial, maestro/hash, mapas pendientes/aprobados y elección del visor (`pending`, `skip` o `build`). El coordinador preasigna destinos y actualiza este resumen al distribuir y recoger resultados; los agentes conservan los registros de cada intento y sus tiempos en carpetas exclusivas. Una corrección derivada ya autorizada no espera una actualización o un mensaje administrativo del coordinador. Léelo al retomar y antes de responder; no olvides materiales pendientes.
 
 En un lote, realiza primero la fase de imágenes de todos los casos y después pregunta una vez por los visores de los materiales aprobados. No interrumpas el lote para construir o probar el HTML del primero. Un caso bloqueado conserva sus candidatos y no impide procesar los otros; nunca ofrezcas como listo el caso fallido.
 
@@ -76,8 +84,8 @@ Cada agente lee y ejecuta el prompt correspondiente:
 | Mapa | Prompt | Archivo final |
 | --- | --- | --- |
 | Albedo / Base Color | [01-albedo.md](references/01-albedo.md) | `Material_BaseColor.png` |
-| Normal DirectX / Y− | [02-normal-dx.md](references/02-normal-dx.md) | `Material_Normal_DX.png` |
-| Normal OpenGL / Y+ | Conversión exacta del DX con `scripts/normal-opengl.mjs` | `Material_Normal_GL.png` |
+| Normal origen, DX o OpenGL | [02-normal-dx.md](references/02-normal-dx.md) | Nombre según la convención solicitada/identificada |
+| Normal opuesto | Inversión exacta de G con `scripts/normal-opengl.mjs` o `scripts/pbr-qa.mjs` | Completa `Material_Normal_DX.png` y `Material_Normal_GL.png` |
 | Roughness | [03-roughness.md](references/03-roughness.md) | `Material_Roughness.png` |
 | Ambient Occlusion | [04-ao.md](references/04-ao.md) | `Material_AO.png` |
 | Specular escalar UE | [05-specular-ue.md](references/05-specular-ue.md) | `Material_Specular_UE.png` |
@@ -87,25 +95,35 @@ Asigna destinos exclusivos. Ningún agente modifica el albedo u otros mapas. El 
 
 Cada agente registra **el texto efectivo pasado al generador**, las dos referencias y sus roles, y su revisión con hash conforme a [quality.md](references/quality.md). Reúne los prompts en `work/prompts.json`, una entrada por nombre final con `text` y `exact: true` cuando proceda. Si una corrección produce el mapa retenido, registra esa llamada; conserva intentos anteriores separados. No reconstruyas un prompt perdido como si fuera literal. Estos registros se guardan aunque el usuario omita HTML.
 
-Después de aceptar el Normal DX, el agente responsable o el coordinador ejecuta `node <skill>/scripts/normal-opengl.mjs --input <resultado>/maps/Material_Normal_DX.png --output <resultado>/maps/Material_Normal_GL.png`. Invierte únicamente G = 255 − G; conserva R, B, dimensiones y 8 bits. No usa otra generación de IA ni aplica contraste, gamma o renormalización a los archivos. Si cambia el DX, vuelve a obtener su GL. El visor identifica el GL como derivado y muestra el prompt real del DX, sin inventar otra llamada.
+El agente de Normal ejecuta `pbr-qa.mjs prepare --map normal --normal-source directx|opengl` sobre su salida real. Produce la pareja mediante G = 255 − G, conservando R/B, tamaño y 8 bits. El conversor `normal-opengl.mjs` también sirve en ambos sentidos. No hay otra generación, contraste, gamma ni renormalización artística. Si cambia el origen, reconvierte el opuesto. Registra la convención pedida y si fue verificada; el archivo calculado lleva `derived_from` y el prompt literal del origen. No inventes otra llamada ni afirmes que siempre se generó primero DX.
 
 ## 5. Revisar y entregar
 
 Reúne las seis revisiones de [quality.md](references/quality.md) y comprueba que sus hashes correspondan a los PNG retenidos. Verifica siete archivos legibles, cuadrados, con las mismas dimensiones, registro respecto al maestro y conversión GL exacta. La igualdad de tamaño no demuestra alineación. Investiga hallazgos o evidencias ausentes; no repitas toda la revisión ni generes otra vez mapas válidos.
 
-Albedo lleva color intrínseco; su luminancia no equivale a Height, Roughness, AO ni Specular. Pigmentos oscuros no son automáticamente cavidades. Normal debe representar vectores DirectX coherentes, no solo una ilustración violeta. Specular usa `F0 = 0.08 × S`, no glossiness ni Metallic. Aplica los criterios de [delegation.md](references/delegation.md).
+Albedo lleva color intrínseco; su luminancia no equivale a Height, Roughness, AO ni Specular. Pigmentos oscuros no son automáticamente cavidades. Normal debe representar direcciones de relieve tangentes en la convención registrada, con una revisión práctica según [quality.md](references/quality.md). Specular usa `F0 = 0.08 × S`, no glossiness ni Metallic. Aplica los criterios de [delegation.md](references/delegation.md).
 
-Pide RGB para Albedo y Normal y monocanal para los cuatro escalares, todos PNG a 8 bits. Comprueba el formato recibido. Si el generador exporta RGB para un mapa gris, decláralo y conviértelo solo con herramientas compatibles con las reglas de la sesión; no lo describas como monocanal ni cambies su gamma. Si no hay conversión disponible, informa el contenedor real. Haz cualquier conversión autorizada antes de la revisión final: un hash o diagnóstico anterior no aprueba un archivo convertido después.
+Pide RGB para Albedo/Normal y monocanal para los cuatro escalares, todos PNG a 8 bits. Usa `scripts/pbr-qa.mjs` para conservar el original, convertir el contenedor RGB casi gris a escalar sin gamma, registrar canales/hashes y generar los diagnósticos de una vez. No vuelvas a escribir scripts equivalentes por material. La conversión precede a la revisión; no describe como monocanal un RGB ni como pérdida cero un promedio de canales distintos.
 
-En los **derivados**, ante un defecto concreto pide **una corrección dirigida al agente responsable**, conservando ambas referencias. Si persisten costuras, registro incorrecto o un error que falsee el tipo de mapa, conserva el trabajo e informa que el conjunto aún no está aprobado. Si descubres un defecto del **albedo**, vuelve al bucle del paso 3 e invalida los derivados de ese maestro. No declares listo un conjunto con defectos conocidos ni empieces su visor.
+El encargo de cada **derivado** incluye **una corrección autónoma por defecto crítico**, conservando ambas referencias y el intento anterior. No necesita una pausa para pedir permiso al coordinador. No corrijas ni rechaces por DX frente a GL, longitudes vectoriales no perfectas, flags aislados, pequeños perfiles sin artefacto visible o baselines artísticos como gris128. Si persiste una costura visible, registro visiblemente incorrecto o un error que falsee el tipo de mapa, conserva pendiente y explica ese efecto concreto. Un mapa utilizable con límites menores puede aprobarse con advertencias. Si falla el **albedo**, vuelve a su bucle e invalida los derivados del maestro anterior. No ocultes defectos reales ni empieces un visor de un conjunto no aprobado.
 
-Con el conjunto aprobado, entrega **siete PNG en `maps/`: seis tipos y ambas convenciones de Normal**, enlazados o en un ZIP ligero. Selecciones, recortes y diagnósticos son intermediarios. Informa dimensiones, bits, canales reales y alcance de la revisión. «Sin costuras visibles en las pruebas realizadas» no es una certificación matemática ni un bake físico.
+Reúne `work/reviews.json` y ejecuta `scripts/pbr-qa.mjs verify-set --root <caso>` una sola vez para la integridad final, hashes y pareja Normal. No repitas la inspección completa que ya hizo el agente salvo incertidumbre concreta.
+
+Con los siete mapas base aprobados, ejecuta `node <skill>/scripts/export-variants.mjs --maps <caso>/maps`. Conserva los originales de Roughness y Specular y añade sus **tres contrastes por mapa** usando las recetas incluidas de PBR Studio: seis PNG derivados sin llamadas de IA. No inventes una nueva generación ni otro prompt para estas variantes. Documenta su origen, receta y cualquier excepción por falta de variación.
+
+Entrega la **carpeta local `maps/` con los trece PNG**: siete base y seis variantes de contraste. Enlaza la carpeta real; un ZIP es adicional solo si se solicita y no sustituye esa carpeta. Selecciones, recortes y diagnósticos permanecen en `work/`. Informa dimensiones, bits, canales reales y alcance de la revisión en la entrega y registros, sin llenar el visor de notas técnicas. «Sin costuras visibles en las pruebas realizadas» no es una certificación matemática ni un bake físico.
 
 **Ahora pregunta:** «Los mapas están listos y revisados. ¿Quieres crear el visor HTML Arquinovatos o terminar solo con los PNG?». Usa una pregunta con las opciones **Crear visor HTML** y **Omitir HTML**, si la sesión ofrece esa herramienta. Guarda `pending` y espera la elección; el silencio no autoriza construir. Si omite, guarda `skip` y termina. Si ya eligió expresamente para esta ejecución, respeta esa elección sin otra confirmación. Una elección de HTML nunca adelanta su construcción a la revisión de imágenes.
 
 ## 6. Construir el visor solo si se elige
 
-Con la elección `build`, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. Usa la plantilla de `assets/review/`, descargada con la skill desde GitHub: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, siete PNG y los dos logos incrustados sin modificar sus bytes. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
+Con la elección `build`, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. Usa la plantilla de `assets/review/`, descargada con la skill desde GitHub: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, trece PNG y los dos logos incrustados sin modificar los originales. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
+
+Los selectores de **Roughness y Specular** incluyen Original y Contraste 1/2/3, con las recetas correspondientes de PBR Studio. Permiten probar y descargar cada variante a resolución completa; no requieren otras generaciones de IA. Los deslizadores siguen ajustando solo la vista previa. **Abrir carpeta de mapas** abre el directorio real con todos los originales y variantes.
+
+Mantén únicamente etiquetas, controles y mensajes operativos indispensables. No muestres la revisión, los avisos experimentales ni los párrafos de explicación de archivos dentro del HTML; conserva sus evidencias en JSON. El encabezado dice **«Los mejores recursos para render en arquinovatos.com»**, con redes oficiales, **Más información** y ayuda de WhatsApp Business según la configuración pública de MKT Arquinovatos.
+
+Después de todos los mapas carga la landing vigente por su URL remota, usando la integración pública de MKT. Distribuye solo el enlace y el código de integración; no copies el HTML de la landing al repositorio ni al archivo del material. La integración no recibe la foto, mapas, prompts ni rutas locales. La vista local del material sigue siendo usable si la web no está disponible.
 
 El constructor también crea `Iniciar_visor.mjs`, `review-files.json` y una copia exacta `Foto_referencia.ext`. El manifiesto usa rutas relativas: conserva la carpeta completa con `maps/` al moverla. El HTML funciona solo para revisar y ajustar. Inicia el acompañante en una sesión retenida y abre su URL en la misma computadora para habilitar **Abrir ubicación del archivo**. Usa únicamente los archivos de esta ejecución; el acompañante no ofrece acceso general al disco. En un enlace remoto o en el celular esa acción debe explicarse como local. Los controles solo cambian la vista previa, no los PNG finales.
 

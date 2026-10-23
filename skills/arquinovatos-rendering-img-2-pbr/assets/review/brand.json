@@ -1,0 +1,21 @@
+{
+  "informationUrl": "https://piloto.arquinovatos.com/#productos",
+  "socialLinks": [
+    {
+      "label": "YouTube",
+      "url": "https://www.youtube.com/@arquinovatos"
+    },
+    {
+      "label": "Instagram",
+      "url": "https://www.instagram.com/arquinovatos/"
+    },
+    {
+      "label": "TikTok",
+      "url": "https://www.tiktok.com/@arquinovatos"
+    }
+  ],
+  "whatsappUrl": "https://wa.me/525661304898?text=Hola%2C%20necesito%20ayuda%20con%20los%20materiales%20PBR%20de%20Arquinovatos.",
+  "landingUrl": "https://piloto.arquinovatos.com/?arq_embed=pbr",
+  "configUrl": "https://piloto.arquinovatos.com/assets/integrations/pbr/brand.json",
+  "revision": "pbr-bootstrap-2026-10-22"
+}

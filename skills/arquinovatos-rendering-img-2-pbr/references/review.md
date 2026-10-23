@@ -1,46 +1,47 @@
-# Visor de resultados
+# Construir el visor y entregar la carpeta
 
-Lee este documento **después de aceptar y entregar los PNG**, cuando el usuario elija construir el visor. Si omite HTML, no construyas ni abras el acompañante y no vuelvas a preguntarlo en esa ejecución. Si todavía no ha elegido, espera. Conserva los archivos para poder añadirlo después sin regenerar mapas.
+Usa esta guía cuando los siete mapas base estén aprobados y el usuario haya elegido el HTML. No regeneres imágenes ni escribas otra interfaz. La plantilla conserva el probador, las tres formas, controles, temas y prompts.
 
-Usa los recursos de `assets/review/`; no recrees ni rediseñes el probador en cada ejecución. Incluye esfera y cubo redondeado con malla, plano infinito por intersección analítica, tiling UV y temas claro/oscuro con los logos incluidos. No requiere bibliotecas de red. Interpreta Albedo como sRGB, datos como lineales, Normal como DirectX Y− y Specular como F0 = 0.08 × S. La inversión Y es una prueba del relieve en la vista previa. La altura es relativa, sin escala física recuperada; en equipos sin texturas de vértice se representa como relieve de superficie.
-
-## Construir
-
-Resuelve `<skill>` y las rutas de esta ejecución. Usa el ejecutable Node.js disponible, sin instalar paquetes:
+## Construcción
 
 ```text
-node <skill>/scripts/build-review.mjs --maps <resultado>/maps --photo <foto-original> --prompts <resultado>/work/prompts.json --name "Nombre del material" --zone "Zona seleccionada" --output <resultado>/Material_PBR.html
+node <skill>/scripts/build-review.mjs --maps <caso>/maps --photo <referencia-usada> --prompts <caso>/work/prompts.json --name "Nombre del material" --output <caso>/Material_PBR.html
 ```
 
-Opcional: `--note "Limitaciones observadas en esta revisión"`. Si la foto usada por los agentes fue un recorte, pasa esa misma referencia y conserva el original fuera del paquete público.
+Usa la misma referencia fotográfica que recibieron los agentes, aunque sea un recorte fiel. Conserva el original en el caso. El constructor incrusta los bytes de los siete mapas base y exporta automáticamente tres variantes de Roughness y tres de Specular en maps/. Si ya fueron exportadas, las comprueba sin alterar los originales. No hacen falta PBR Studio ni paquetes npm.
 
-Formato de `prompts.json`, una entrada por cada uno de los seis nombres finales:
+Para entregar solo PNG, ejecuta `node <skill>/scripts/export-variants.mjs --maps <caso>/maps` después de aprobar las bases. Si un mapa tiene dos niveles de gris o menos y no admite una curva útil, conserva el original y comunica la excepción en el informe; no inventes detalle para completar nombres.
 
-```json
-{
-  "Material_BaseColor.png": {"text": "Prompt efectivo enviado", "exact": true, "reference_roles": ["Fotografía original del material."]},
-  "Material_Normal_DX.png": {"text": "Prompt efectivo enviado", "exact": true, "reference_roles": ["Albedo maestro inmutable.", "Fotografía original del material."]}
-}
-```
+La entrega principal es la **carpeta real maps/** con originales y variantes, no un ZIP. El HTML muestra los trece mapas en condiciones normales. El constructor también escribe Iniciar_visor.mjs, review-files.json y Foto_referencia.ext; conserva juntos esos archivos al mover el resultado.
 
-El ejemplo abrevia los otros cuatro. Nunca marques como exacta una plantilla o reconstrucción. El texto del prompt no incluye automáticamente las imágenes: registra sus roles reales en orden. Una corrección de Albedo puede necesitar el intento anterior además de la foto; el diálogo debe mostrarlo. Los derivados usan albedo maestro + foto.
+## Variantes de PBR Studio
 
-Antes de construir, crea `Material_Normal_GL.png` desde DX con `scripts/normal-opengl.mjs`. Este único procesamiento invierte G y conserva R/B; no altera el DX. El constructor exige los siete PNG, comprueba tamaño cuadrado común, incrusta sus bytes y escapa etiquetas y prompts. No modifica píxeles. El HTML contiene la foto, siete mapas y dos logos; puede pesar varios MB. Se abre en un navegador moderno sin Internet ni servidor; WebGL habilita el probador.
+Roughness: Original y Contraste 1/2/3 usan reflection-contrast-v2-protected, perfil approved. El histograma completo define extremos y mediana; potencias 1.05/2.2/12, anclas .80/.50/.20, mezcla 10% lineal y 90% curva, rango protegido 8–247.
 
-## Abrir ubicación
+Specular: Original y Contraste 1/2/3 usan el perfil vigente separado de Specular, separated-v1. Las curvas y remapeos correspondientes están en PBRMath.specularLUT. No son la inversión de Roughness ni sus mismas curvas. Preservan datos escalares y no necesitan IA adicional.
 
-El constructor escribe junto al HTML `Iniciar_visor.mjs`, `review-files.json` y una copia exacta `Foto_referencia.ext`. El manifiesto usa rutas relativas a esa carpeta. Mantén `maps/` dentro del resultado y mueve la carpeta completa para conservar el acceso local. Los resultados y el manifiesto **no se publican en GitHub ni en una galería remota** sin solicitud del usuario.
+Los selectores cambian la textura antes de los controles de intensidad y F0; Descargar guarda la variante completa como PNG. Los deslizadores ajustan la vista previa. Restablecer vuelve a Original. Los archivos derivados conservan source, recipe, profile y hashes; su prompt es el literal que generó el mapa origen, sin atribuir otra llamada.
+
+## Carpeta local
 
 ```text
-node <resultado>/Iniciar_visor.mjs
+node <caso>/Iniciar_visor.mjs
 ```
 
-Inicia el comando en una sesión retenida y abre la URL `http://127.0.0.1:PUERTO` que devuelve. Sirve el HTML en loopback, con una lista cerrada de archivos y comprobación de origen/token. Clic derecho sobre una imagen o botón Archivo → Abrir ubicación del archivo. Windows selecciona el archivo en Explorer; macOS usa Finder; Linux abre su carpeta. Cerrar el proceso detiene el acceso local. No expongas este servicio a Internet.
+Abre la URL loopback que devuelve en la misma computadora. **Abrir carpeta de mapas** abre directamente el directorio maps/ ya manifestado. Los menús Archivo siguen permitiendo seleccionar cada PNG en su carpeta. El acompañante solo acepta el origen y token de esta vista, y abre archivos o el único directorio incluidos en el manifiesto. No acepta rutas arbitrarias del navegador.
 
-Al abrir directamente el HTML o una galería web, el navegador no dispone de ese acompañante. La acción aparece deshabilitada y explica cómo abrir el visor local. Desde el celular funciona la revisión y copia de prompts; la carpeta existe en la computadora que generó los archivos.
+Un HTML abierto directamente conserva material, galería y prompts; la acción de abrir carpeta necesita el acompañante. El usuario no debe instalar otro programa ni pedir un ZIP para acceder a los mapas.
 
-## Comprobar y entregar
+## Marca y landing en vivo
 
-En uso normal basta verificar la salida del constructor, los siete mapas y sus prompts, y que el visor abra y dibuje el material si hay navegador disponible. La plantilla ya incorpora las tres formas, nueve sliders, inversión Y, temas, giro, restablecimiento y menú contextual. No repitas una batería de pruebas de todos los controles para cada material. Esa comprobación completa corresponde a cambios de la plantilla o a un fallo concreto. El GL muestra su operación y el prompt del DX; no se atribuye a otra llamada de IA. El shader normaliza los vectores para dibujar; eso no repara el Normal original ni certifica el PBR.
+El encabezado dice «Los mejores recursos para render en arquinovatos.com», con enlaces oficiales de redes, Más información y un globo de WhatsApp Business. Usa únicamente la configuración pública confirmada por MKT ARQUINOVATOS, en assets/review/brand.json; --brand permite elegir un archivo del mismo schema.
 
-Añade el HTML, acompañante, manifiesto y copia de referencia a los PNG ya entregados. Construye y abre únicamente los visores elegidos por el usuario, sin otra generación de IA. Publicar fotos, prompts o resultados en un sitio requiere que el usuario lo solicite. La skill no necesita Sites, PBR Studio ni una cuenta del autor.
+Schema público: informationUrl, socialLinks [{label,url}], whatsappUrl, landingUrl, configUrl y revision. Las URLs son HTTPS. La configuración remota se consulta sin credenciales ni referrer al abrir, volver a la vista y cada 30 segundos mientras está visible; una nueva revisión recarga la landing vigente.
+
+Después de todos los mapas aparece un iframe con la landing remota vigente. Distribuye solo su URL y el código de integración; no guardes una copia del HTML remoto en el repositorio, la skill o el material. No envíes fotos, mapas, prompts, rutas ni el token local a la web. La altura se recibe por postMessage desde el origen y ventana exactos del iframe; el tipo acordado es arquinovatos:landing:resize. Una caída de la web no bloquea el material local.
+
+## Texto y revisión
+
+Muestra solo nombres, etiquetas, acciones y mensajes operativos necesarios. Las observaciones de QA, calibración y limitaciones se guardan en work/ y en el informe de entrega; no añadas revisión visible, avisos experimentales ni párrafos sobre cómo se incrustan los archivos.
+
+En cada material comprueba la construcción, carpeta y apertura con WebGL. No repitas una batería de todos los controles si la plantilla no cambió. Al cambiar la plantilla, comprueba las funciones afectadas y una vista de escritorio/móvil en una pasada acotada. Preserva prompts literales, hashes y registros de imágenes originales. Publicar fotos o resultados sigue requiriendo solicitud expresa; el repositorio público contiene la skill, no los materiales privados.

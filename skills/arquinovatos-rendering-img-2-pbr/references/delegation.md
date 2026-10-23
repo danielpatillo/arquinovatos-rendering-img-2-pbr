@@ -1,61 +1,43 @@
-# Delegación y aceptación
+# Delegación con poca coordinación
 
-## Encargo por mapa
+Cada mapa base lo genera un subagente con el generador integrado. Hereda modelo y razonamiento salvo preferencia expresa; no abras chats separados. El coordinador lee esta guía y quality.md; cada agente lee solo su prompt especializado. No hagas que todos relean la skill completa y los otros cinco prompts.
 
-Cada uno de los seis mapas base debe generarlo un subagente con el generador integrado. Incluye en su tarea:
+## Un encargo completo por mapa
 
-```text
-Genera únicamente [mapa] para [caso y material].
-Lee el prompt [ruta resuelta].
-Maestro: [ruta del albedo; no aplica al generar el albedo].
-Foto: [ruta de la fotografía o recorte fiel].
-Ficha común: [material, acabado y relieve estimado].
-Dimensiones maestras reales: [ancho × alto].
-Salida exclusiva: [ruta resuelta para este mapa].
-Inspecciona y adjunta las referencias al generador integrado:
-Image 1 = albedo, Image 2 = foto; para albedo solo se adjunta la foto.
-Un mapa PNG a 8 bits, sin texto, marco, render ni collage.
-Conserva diseño, encuadre, orientación y escala del maestro.
-Copia el archivo real de la herramienta a tu destino exclusivo.
-Trabaja en work; solo el candidato aprobado se copia a maps con sus bytes intactos.
-No modifiques otros archivos ni delegues de nuevo.
-Lee [ruta resuelta de references/quality.md].
-Ejecuta [ruta resuelta de scripts/check-seams.mjs] con [ejecutable Node disponible]
-en tu carpeta QA exclusiva.
-Inspecciona repetición 3 × 3, desplazamiento y registro con el maestro.
-Guarda review.json con el hash del archivo, aprobado o pendiente y hallazgos.
-Para albedo, conserva cada intento por separado y corrige en bucle hasta aprobarlo,
-según quality.md; informa al coordinador para que actualice el progreso.
-No construyas HTML ni pruebes el visor durante la fase de imágenes.
-Devuelve ruta, dimensiones, canales y bits comprobados,
-referencias realmente enviadas, revisión hecha y limitaciones.
-Incluye el texto literal efectivo enviado y los roles de cada imagen en orden.
-Si conservas una corrección, devuelve el prompt de esa llamada y sus referencias;
-no sustituyas ese registro por la plantilla o el intento inicial.
-Si falta el generador o no puedes adjuntar imágenes, informa el bloqueo.
-```
+Pasa rutas absolutas y un encargo breve, sin volver a redactar todo el prompt:
 
-Si existe `referenced_image_paths`, usa `[albedo, foto]` para derivados y `[foto]` para el albedo inicial. Para corregir el albedo, adjunta `[foto, candidato anterior]` e identifica sus roles expresamente; no confundas ese candidato con un maestro ya aprobado. En otros clientes sigue su firma real. Inspecciona referencias locales antes de editar. No inventes argumentos de tamaño, formato o destino ni mezcles mecanismos de referencia incompatibles.
+    Genera y revisa [mapa]. Lee [prompt] y quality.md.
+    Maestro: [ruta, dimensiones y hash]; foto común: [ruta].
+    Ficha compartida: [ruta o material/acabado/relieve en pocas líneas].
+    Destino exclusivo: [work/mapa].
+    Adjunta realmente [maestro, foto], en ese orden. Para albedo: [foto].
+    Guarda cada llamada con prompt literal, argumentos efectivos y roles;
+    copia la salida real, nunca una ruta escrita en el prompt.
+    Usa pbr-qa.mjs; completa review.json en la raíz del intento.
+    El encargo incluye una corrección autónoma si aparece un defecto crítico,
+    con los mismos dos adjuntos y una instrucción concreta. No la uses para
+    alcanzar un gris orientativo ni cambiar Y. No esperes un permiso administrativo.
+    No modifiques albedo, otros mapas o progress.json. No delegues ni construyas HTML.
+    Confirma al arrancar y devuelve candidato, revisión, referencias, tiempos y límites.
 
-El generador puede guardar primero en su carpeta administrada. Copia después el archivo seleccionado al espacio de trabajo; no asumas que existe un parámetro para elegir destino. Si solo devuelve una imagen en contexto, usa su mecanismo de descarga documentado. Si no puede exportarse, informa el límite antes de afirmar que guardaste un archivo.
+La convención Normal puede ser DX o GL. Anota la convención solicitada y si llegó a verificarse visualmente; no la deduzcas solo por el color violeta. pbr-qa.mjs con --normal-source produce la pareja opuesta por inversión exacta de G. Asigna los nombres finales según el origen declarado, sin inventar otra llamada. La falta de longitud unitaria perfecta no justifica una segunda generación por sí sola.
 
-Respeta concurrencia de agentes y del servicio. Después de aceptar el albedo, ocupa los huecos disponibles con distintos mapas y reutiliza agentes inactivos. Un agente no debe bloquear el arranque de otros mapas independientes mientras revisa o corrige el suyo. No generes seis mapas en una llamada ni un mosaico. La tarea de cada nuevo mapa especifica sus dos imágenes y destino.
+## Referencias y trazabilidad
 
-El agente de Normal entrega además `Material_Normal_GL.png` ejecutando el conversor incluido sobre el DX aceptado. Es una conversión determinista de datos, G = 255 − G, sin otra llamada de IA. Si el DX se corrige, reconvierte el GL. El prompt registrado corresponde al DX; la variante OpenGL se identifica como derivada.
+Si se admite referenced_image_paths, usa [maestro, foto] en **cada** llamada derivada. Para corregir albedo usa [foto, candidato a corregir], con sus roles explícitos. Si solo existen imágenes del contexto, cada agente carga sus propios adjuntos y selecciona exactamente esos, evitando mapas ajenos.
 
-## Criterios de revisión
+Cada intento conserva generation-request.json con los argumentos reales y reference_roles, prompt.txt literal, metadatos pequeños de respuesta y el original. No vuelques base64 en mensajes. Para el Normal invertido registra derived_from y el prompt real del origen; no inventes un prompt independiente. El coordinador reúne esos registros en work/prompts.json sin reconstruirlos de memoria.
 
-- **Integridad:** siete PNG legibles: seis tipos de mapa y dos convenciones del mismo Normal; nunca placeholders, prompts escritos o renders. GL conserva R/B del DX e invierte únicamente G.
-- **Referencias:** los derivados recibieron el mismo albedo y foto. Verifica la llamada o evidencia disponible; el resumen de un agente no demuestra por sí solo que adjuntó imágenes.
-- **Dimensiones:** cuadradas y comunes. Corrige el mapa divergente. Si solo puedes igualar tamaños por remuestreo, informa resolución nativa y remuestreada sin afirmar detalle nuevo. No cambies el maestro a mitad del trabajo.
-- **Registro:** juntas, bordes y vetas coinciden con el maestro. Revisa detalles identificables; misma resolución no implica mismo diseño.
-- **Seamless:** continuidad de estructura y valor en ambos ejes y esquinas. Aplica [quality.md](quality.md), sin llamar mapas finales a los diagnósticos. Un albedo con costuras bloquea los derivados; un defecto crítico pendiente impide aprobar el conjunto y pasar al HTML.
-- **Albedo:** conserva identidad y variación del material, sin sombras, reflejos ni AO pintados.
-- **Normal:** DirectX / Y−; zona plana cerca de RGB (128, 128, 255), salientes y cavidades coherentes. Si hay análisis numérico, decodifica vectores y revisa longitud y consistencia. Renormalizar no corrige un relieve inventado; color violeta no demuestra un bake válido.
-- **Roughness:** negro liso, blanco rugoso; deriva del acabado, no de luminancia o inversión de otro mapa.
-- **AO:** blanco abierto y oscuro confinado. Evita sombras direccionales y juntas negras indiscriminadas.
-- **Specular:** almacena `S`, con `F0 = 0.08 × S`. Variación sutil según el prompt; no es Metallic ni intensidad universal de reflexión.
-- **Height:** negro bajo y blanco alto; geometría relativa coherente, sin convertir pigmentos o sombras en relieve. No impongas amplitud vertical física.
-- **Datos:** Albedo se interpreta como sRGB. Normal y escalares son datos sin decodificación sRGB. No apliques gamma o contraste artístico para hacerlos llamativos.
+Pide tamaño cuadrado nativo máximo para el albedo y sus dimensiones reales para los derivados; no inventes controles de herramienta ni prometas un máximo técnico que no se comprobó. Solo convierte almacenamiento con el helper: no remuestrees ni repintes para aparentar registro. Albedo es sRGB; los demás son datos sin decodificación sRGB.
 
-La generación independiente no garantiza coincidencia exacta píxel a píxel. Distingue «verificado», «revisado visualmente» y «no verificado». Si observas una discrepancia sin resolver, no anuncies un conjunto listo para producción.
+## Cola y tiempos
+
+Preasigna destinos para los intentos inicial y de corrección. Ocupa cada hueco real con el siguiente mapa pendiente y reutiliza agentes que ya terminaron. No esperes que un mapa concreto termine para lanzar otro independiente. Cada agente hace generación, preparación, inspección y corrección autorizada como un solo trabajo; el coordinador no dirige cada comando.
+
+Guarda started_at, generation_started_at, generation_finished_at y finished_at en el registro del intento. El coordinador actualiza progress.json al repartir y recoger resultados, incorporando esos registros. No bloquees la corrección porque aún no se actualizó el resumen del coordinador.
+
+La confirmación de arranque debe preceder a lecturas largas. Si falta y tampoco aparece el request/estado del intento, comprueba el estado real del agente; si la herramienta confirma pending_init, recupéralo una vez desde los archivos existentes. **No interrumpas ni dupliques una generación que ya tiene request o está ejecutándose porque pasaron unos segundos.** No consultes continuamente estados sin cambios.
+
+## Aceptación
+
+Un dueño revisa cada mapa y el coordinador valida los archivos retenidos. Usa quality.md para distinguir defectos, advertencias y números orientativos. Una pequeña diferencia de contraste no prueba desplazamiento UV; dimensiones iguales tampoco prueban registro. Compara las juntas y rasgos reconocibles visualmente. Conserva cualquier limitación aceptada, sin prometer bake físico o coincidencia matemática.

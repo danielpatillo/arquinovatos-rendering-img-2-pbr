@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const M=window.PBRMath;
+  const variantChannels=[{key:'roughness',label:'Roughness',slot:2,filename:'Material_Roughness.png',prefix:'Material_Roughness',variants:M.roughnessVariants,lut:M.roughnessLUT},{key:'specular',label:'Specular',slot:4,filename:'Material_Specular_UE.png',prefix:'Material_Specular_UE',variants:M.specularVariants,lut:M.specularLUT}];
   class MaterialPreview {
     constructor(canvas,status){
       Object.assign(this,{canvas,status,settings:M.defaults(),pitch:.12,yaw:.6,epoch:0,ready:false,auto:false,invertY:false,textures:[],shape:'sphere'});
@@ -86,15 +87,35 @@
     }
     async load(item){
       const epoch=++this.epoch;this.ready=false;this.status.textContent='Cargando el material…';
+      for(const channel of variantChannels){this[channel.key+'Sources']=null;this[channel.key+'Original']=item.maps.find(m=>m.filename===channel.filename)?.src;}
       const names=['Material_BaseColor.png','Material_Normal_DX.png','Material_Roughness.png','Material_AO.png','Material_Specular_UE.png','Material_Height.png'];
       try{
         const images=await Promise.all(names.map(name=>new Promise((resolve,reject)=>{const map=item.maps.find(m=>m.filename===name);if(!map){reject(Error('Falta '+name));return;}const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(Error('No cargó '+name+'. Recarga la página.'));image.src=map.src;})));
         if(epoch!==this.epoch)return;const gl=this.gl,max=gl.getParameter(gl.MAX_TEXTURE_SIZE);if(images.some(im=>im.width>max||im.height>max))throw Error('Este equipo admite texturas de hasta '+max+' px. Puedes ver los mapas completos en la galería.');
         for(const texture of this.textures)gl.deleteTexture(texture);this.textures=[];
         for(const image of images){const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,gl.NONE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);for(const name of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,name,gl.CLAMP_TO_EDGE);for(const name of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_2D,name,gl.LINEAR);this.textures.push(texture);}
+        for(const channel of variantChannels){
+          const original=images[channel.slot],scratch=document.createElement('canvas');scratch.width=original.naturalWidth;scratch.height=original.naturalHeight;
+          const ctx=scratch.getContext('2d',{willReadFrequently:true});ctx.drawImage(original,0,0);const source=ctx.getImageData(0,0,scratch.width,scratch.height),hist=new Array(256).fill(0);
+          for(let i=0;i<source.data.length;i+=4)hist[source.data[i]]++;
+          const sources={original};this[channel.key+'Sources']=sources;
+          for(const variant of channel.variants.slice(1)){
+            const lut=channel.lut(hist,variant.id);if(!lut)continue;
+            const canvas=document.createElement('canvas');canvas.width=scratch.width;canvas.height=scratch.height;
+            const pixels=new ImageData(new Uint8ClampedArray(source.data),canvas.width,canvas.height);
+            for(let i=0;i<pixels.data.length;i+=4)pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=lut[source.data[i]];
+            canvas.getContext('2d').putImageData(pixels,0,0);sources[variant.id]=canvas;
+          }
+        }
         this.ready=true;this.status.textContent=this.vertexHeight?'Arrastra para girar. También puedes usar las flechas.':'Arrastra para girar. La altura se muestra como relieve de superficie en este equipo.';this.schedule();
       }catch(error){if(epoch===this.epoch)this.status.textContent=error.message;}
     }
+    setVariant(key,id){
+      const channel=variantChannels.find(item=>item.key===key),source=this[key+'Sources']?.[id];if(!channel||!source||!this.ready)return;
+      const gl=this.gl;gl.activeTexture(gl.TEXTURE0+channel.slot);gl.bindTexture(gl.TEXTURE_2D,this.textures[channel.slot]);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,gl.NONE);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);this[key+'Variant']=id;this.schedule();
+    }
+    setRoughnessVariant(id){this.setVariant('roughness',id);}
+    setSpecularVariant(id){this.setVariant('specular',id);}
     schedule(){if(this.frame)return;this.frame=requestAnimationFrame(()=>{this.frame=null;if(document.hidden)return;this.render();if(this.auto&&this.ready){this.yaw+=.006;this.schedule();}});}
     render(){
       const gl=this.gl,c=this.canvas,rect=c.getBoundingClientRect(),ratio=Math.min(devicePixelRatio||1,1.5),width=Math.max(1,Math.round(rect.width*ratio)),height=Math.max(1,Math.round(rect.height*ratio));
@@ -113,7 +134,23 @@
   window.createMaterialTester=()=>{
     const canvas=document.getElementById('material-sphere'),status=document.getElementById('sphere-status'),area=document.getElementById('map-controls');let preview;
     try{preview=new MaterialPreview(canvas,status);}catch(error){status.textContent=error.message;area.hidden=true;return {load:()=>{}};}
-    const inputs=[];
+    const inputs=[],variantUI=[];
+    for(const channel of variantChannels){
+      const select=document.getElementById(channel.key+'-variant'),download=document.getElementById('download-'+channel.key),note=document.getElementById(channel.key+'-variant-note');
+      if(!select||!download||!note)continue;variantUI.push({channel,select,download,note});
+      select.addEventListener('change',()=>preview.setVariant(channel.key,select.value));
+      download.addEventListener('click',async()=>{
+        const id=select.value,source=preview[channel.key+'Sources']?.[id];if(!source)return;
+        download.disabled=true;download.setAttribute('aria-busy','true');
+        try{
+          // Preserve the embedded original bytes; encode only calculated variants.
+          const blob=id==='original'?await fetch(preview[channel.key+'Original']).then(response=>{if(!response.ok)throw Error('No se pudo leer el original.');return response.blob();}):await new Promise((resolve,reject)=>source.toBlob(blob=>blob?resolve(blob):reject(Error('No se pudo preparar el PNG.')),'image/png'));
+          const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=id==='original'?channel.filename:channel.prefix+'_Contraste_'+id.slice(-1)+'.png';link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+          note.textContent='PNG preparado.';
+        }catch(error){note.textContent=error.message||'No se pudo preparar la descarga.';}
+        finally{download.disabled=!preview.ready;download.removeAttribute('aria-busy');}
+      });
+    }
     for(const control of M.controls){
       const wrap=document.createElement('div');wrap.className='map-control'+(control.key==='tiling'?' uv-control':'');const label=document.createElement('label');label.htmlFor='map-'+control.key;label.textContent=control.label;
       const out=document.createElement('output');out.htmlFor=label.htmlFor;const input=document.createElement('input');Object.assign(input,{type:'range',id:label.htmlFor,min:control.min,max:control.max,step:control.step,value:control.value});
@@ -122,7 +159,11 @@
     }
     const shape=document.getElementById('preview-shape'),invert=document.getElementById('invert-normal'),rotate=document.getElementById('rotate-material');
     shape.addEventListener('change',()=>preview.setShape(shape.value));invert.addEventListener('change',()=>{preview.invertY=invert.checked;preview.schedule();});rotate.addEventListener('change',()=>{preview.auto=rotate.checked;preview.schedule();});
-    document.getElementById('reset-material').addEventListener('click',()=>{preview.reset();shape.value='sphere';invert.checked=false;rotate.checked=false;for(const row of inputs){row.input.value=row.control.value;row.update();}});
-    return {load:item=>preview.load(item)};
+    document.getElementById('reset-material').addEventListener('click',()=>{preview.reset();for(const row of variantUI){preview.setVariant(row.channel.key,'original');row.select.value='original';}shape.value='sphere';invert.checked=false;rotate.checked=false;for(const row of inputs){row.input.value=row.control.value;row.update();}});
+    let loadEpoch=0;return {load:async item=>{
+      const epoch=++loadEpoch;for(const row of variantUI){row.select.disabled=true;row.download.disabled=true;row.select.value='original';}
+      await preview.load(item);if(epoch!==loadEpoch)return;
+      for(const row of variantUI){const sources=preview[row.channel.key+'Sources'];for(const option of row.select.options)option.disabled=!sources?.[option.value];row.select.disabled=!preview.ready;row.download.disabled=!preview.ready;row.note.textContent=!preview.ready?'Vista no disponible.':sources?.[row.channel.variants[1].id]?'Original y tres contrastes.':'Mapa uniforme: solo Original.';}
+    }};
   };
 })();

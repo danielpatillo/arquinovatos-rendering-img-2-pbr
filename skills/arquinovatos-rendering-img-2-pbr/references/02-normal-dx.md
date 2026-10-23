@@ -1,107 +1,31 @@
-# Generate a Seamless Tangent-Space Normal Map — DirectX
+# Tangent-space Normal — either Y convention
 
-## 1. Objective
+Generate ONE usable tangent-space normal data map for the material, not a render or a purple illustration. The historical filename of this prompt does not require DirectX output.
 
-Generate a detailed, geometrically coherent tangent-space Normal Map using the DirectX / Y− convention.
+## Actual attachments
 
-Produce actual normal-vector data, not a blue-purple illustration or a colorized grayscale image.
+1. Image 1: approved master albedo; authority for positions, joints, scale, orientation and UV layout.
+2. Image 2: common photograph/crop; authority for material morphology, never photographic feature positions or lighting.
 
-The map is intended for a PBR workflow involving D5 Render, Twinmotion, or Unreal Engine, with the appropriate import settings.
+Preserve Image 1's actual dimensions and framing. Do not crop, rotate, rearrange or invent a different grid. Interpret color independently of geometry: a mineral inclusion is not automatically a cavity.
 
-## 2. Reference Hierarchy
+## Geometry and data
 
-### Image 1 — Master Albedo and UV Layout
+Infer restrained relief appropriate to the reference. Honed floor slabs remain nearly planar, joints shallow and pores subtle. Do not emboss every pigment edge, add rounded pillow-like tiles, generic noise or broad directional shading.
 
-Image 1 is authoritative for the exact position, shape, scale, orientation, and distribution of every feature.
+A flat area is approximately RGB(128,128,255). Encode coherent tangent directions; exact byte values and perfect vector length at every pixel are not acceptance targets for this generated artistic map. Grossly unrelated direction patterns or a rendered/colorized image are defects; small encoding deviations are review information.
 
-Preserve its pixel dimensions, framing, and nominal coverage of 2 × 2 meters.
+## DX and OpenGL are both acceptable
 
-Do not crop, rotate, mirror, offset, rearrange, or regenerate its layout.
+Choose and record a requested source convention, DirectX/Y− or OpenGL/Y+. If none is preferred, use one consistently in the request. If inspection identifies the opposite convention, relabel the source and invert G to obtain the other file; **do not regenerate to force Y**. Record whether the convention was only requested or actually verified. Both versions will be delivered, and the viewer can flip Y.
 
-### Image 2 — Surface Morphology Reference
+Run the bundled QA helper with the source convention. It derives the second Normal through G = 255 − G, keeping R/B, dimensions and bit depth unchanged. No extra image call, gamma, contrast or artistic amplification is needed.
 
-Use Image 2 to interpret the material's actual surface character: rounded or sharp edges, pores, grooves, joints, grain, undulations, and other relevant relief.
+## Practical review and output
 
-Do not transfer its perspective, feature positions, cast shadows, or lighting pattern.
+- One RGB PNG, 8 bits, same native dimensions as master, no transparency/text/border/collage.
+- Check native appearance, repeat, offset and recognizable joint registration.
+- Reject a clearly visible extra seam, broken joint or obviously false geometry; do not reject solely for a numerical edge-jump flag, imperfect vector lengths, a pixel-scale profile difference or Y convention.
+- If there is a real blocking defect, use the one directed correction already included in the job. Otherwise accept with declared warnings, preserving the effective prompt, actual attachments and source bytes.
 
-Image 1 determines WHERE features belong. Image 2 guides HOW their surface geometry should be interpreted.
-
-## 3. Authorized Geometric Estimation
-
-Reference-guided geometric estimation is explicitly authorized.
-
-When the exact relief cannot be recovered, choose a conservative, coherent interpretation consistent with the material. Do not ask for additional permission merely because some geometry must be inferred.
-
-Separate pigmentation, reflections, and lighting from surface form.
-
-Dark pixels are not automatically depressions. Bright pixels are not automatically raised areas.
-
-Lighting may provide contextual clues about shape, but it must not be copied into the output as geometry.
-
-Retain genuine relief while removing illumination-related artifacts. Do not reintroduce stains or damage removed from the master albedo.
-
-## 4. Construction Method
-
-Build a coherent interpretation of the surface before encoding its normals.
-
-Where computational tools are available, derive normals from an inferred, periodic height field or another consistent geometric representation. Do not use raw albedo luminance as that height field.
-
-Represent broad form, intermediate relief, and fine surface detail at appropriate scales.
-
-Preserve actual transitions and edges without tracing every color boundary as a ridge.
-
-Do not add generic speckle, embossed pigmentation, sharpening halos, or exaggerated grooves.
-
-If an approved height map is actually accessible in the conversation, use it to maintain geometric consistency. Do not claim access to a map that has not been provided.
-
-## 5. Encoding and Strength
-
-Use tangent-space DirectX / Y− encoding with normalized vectors.
-
-A flat surface corresponds to:
-- Normal vector: (0, 0, 1).
-- Normalized RGB: approximately (0.5, 0.5, 1.0).
-- 8-bit equivalent: approximately (128, 128, 255).
-
-If converting an otherwise equivalent OpenGL normal map, invert the green channel once. Do not mirror the image or invert all channels.
-
-Use a clearly defined but moderate baseline strength.
-
-Interpret "pronounced detail" as well-resolved surface structure, not excessive slopes or extreme RGB contrast.
-
-A normal map necessarily contains an initial perturbation strength. Leave further artistic amplification or reduction to the renderer.
-
-Adjust strength through appropriate vector operations and renormalization, not ordinary image contrast or gamma.
-
-## 6. Seamless Continuity and Alignment
-
-Maintain exact registration with Image 1.
-
-Use periodic boundary handling for slope calculations, filtering, and any other neighborhood-based processing.
-
-Normals must transition consistently across both tile boundaries and the corners, without artificial bands or changes of surface orientation.
-
-Do not distort the layout to conceal seams.
-
-## 7. Output Specifications
-
-- Map: tangent-space Normal Map.
-- Convention: DirectX / Y−.
-- Channels: RGB.
-- Format: lossless PNG.
-- Precision: 8 bits per channel.
-- Dimensions and orientation: identical to Image 1.
-- Interpretation: non-color vector data; no sRGB decoding or artistic color correction.
-- Filename: Material_Normal_DX.png.
-
-Do not claim higher precision than the actual generation and export pipeline provides.
-
-## 8. Validation and Delivery
-
-Check that convex and concave features have the intended orientation, the map aligns with the albedo, and periodic boundaries remain continuous.
-
-Where tools permit, inspect the result under changing light directions. Do not confuse a visually attractive RGB image with valid normal data.
-
-Return only the completed Normal Map, without a render, labels, or other maps.
-
-Proceed without asking for approval of already-authorized estimation. Briefly disclose any technical limitation or unverified property outside the image.
+The two final files are Material_Normal_DX.png and Material_Normal_GL.png; their relationship is exact inversion of G, not two independent generations. Follow quality.md for records and acceptance.

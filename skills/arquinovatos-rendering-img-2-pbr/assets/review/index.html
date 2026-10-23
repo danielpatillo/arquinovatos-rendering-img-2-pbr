@@ -16,12 +16,12 @@
 <body>
   <header class="masthead">
     <div class="brand" role="img" aria-label="Arquinovatos"><img class="logo-dark" src="logo-dark.png" width="3440" height="1440" alt=""><img class="logo-light" src="logo-light.png" width="3440" height="1440" alt=""></div>
-    <span>Materiales desde una fotografía</span><button id="theme-toggle" type="button">Cambiar tema</button>
+    <div class="header-actions"><nav id="brand-social" class="brand-social" aria-label="Redes oficiales" hidden></nav><button id="theme-toggle" type="button">Cambiar tema</button></div>
   </header>
   <main>
     <div class="intro">
-      <h1>Rendering IMG 2 PBR</h1>
-      <p>Explora el material, ajusta su respuesta y compara cada mapa con la fotografía original.</p>
+      <h1>Los mejores recursos para render en arquinovatos.com</h1>
+      <a id="brand-information" class="information-link" target="_blank" rel="noopener noreferrer" hidden>Más información</a>
     </div>
     <nav class="case-picker" aria-label="Elegir prueba">
       <label for="material">Material</label>
@@ -40,9 +40,13 @@
         <div class="tester-heading"><h3 id="tester-title">Vista del material</h3><button id="reset-material" type="button">Restablecer</button></div>
         <div class="tester-layout">
           <div class="sphere-stage"><canvas id="material-sphere" tabindex="0" role="img" aria-label="Vista 3D del material. Arrastra o usa las flechas para girar."></canvas><div class="stage-footer"><label class="motion-control"><input type="checkbox" id="rotate-material"> Giro automático</label><p id="sphere-status" role="status" aria-live="polite">Preparando el probador…</p></div></div>
-          <div class="control-panel"><div class="shape-field"><label for="preview-shape">Forma de prueba</label><select id="preview-shape"><option value="sphere">Esfera</option><option value="rounded-cube">Cubo con bordes redondeados</option><option value="plane">Plano infinito</option></select></div><div id="map-controls" class="map-controls"></div><label class="motion-control normal-inversion"><input type="checkbox" id="invert-normal"> Invertir Y del Normal</label><p class="control-hint">Prueba la orientación del relieve. Se incluyen archivos Normal DX y OpenGL.</p></div>
+          <div class="control-panel">
+            <div class="shape-field"><label for="preview-shape">Forma de prueba</label><select id="preview-shape"><option value="sphere">Esfera</option><option value="rounded-cube">Cubo con bordes redondeados</option><option value="plane">Plano infinito</option></select></div>
+            <div class="variant-pickers"><div class="shape-field map-variants roughness-variants"><label for="roughness-variant">Roughness</label><select id="roughness-variant" disabled><option value="original">Original</option><option value="r01">Contraste 1</option><option value="r02">Contraste 2</option><option value="r03">Contraste 3</option></select><button id="download-roughness" type="button" disabled>Descargar Roughness</button><p id="roughness-variant-note" class="control-hint" role="status"></p></div>
+            <div class="shape-field map-variants specular-variants"><label for="specular-variant">Specular</label><select id="specular-variant" disabled><option value="original">Original</option><option value="s01">Contraste 1</option><option value="s02">Contraste 2</option><option value="s03">Contraste 3</option></select><button id="download-specular" type="button" disabled>Descargar Specular</button><p id="specular-variant-note" class="control-hint" role="status"></p></div></div>
+            <div id="map-controls" class="map-controls"></div><label class="motion-control normal-inversion"><input type="checkbox" id="invert-normal"> Invertir Y del Normal</label>
+          </div>
         </div>
-        <p class="preview-note">Los ajustes cambian la vista previa. Los archivos se conservan. Iluminación de estudio y altura relativa.</p>
       </section>
       <div class="comparison">
         <aside class="reference">
@@ -55,21 +59,16 @@
           <div class="reference-actions"><button id="original-actions" type="button">Acciones del original</button><a id="pin" target="_blank" rel="noopener noreferrer">Ver fuente</a></div>
         </aside>
         <div class="outputs">
-          <div class="outputs-heading"><h3>Mapas del material</h3><span id="map-dimensions"></span></div>
+          <div class="outputs-heading"><h3>Mapas del material</h3><span id="map-dimensions"></span><button id="open-maps" type="button" disabled>Abrir carpeta de mapas</button></div>
+          <p id="open-maps-status" class="action-status" role="status" aria-live="polite"></p>
           <div class="map-grid" id="maps"></div>
         </div>
       </div>
-      <details class="review" open>
-        <summary>Revisión de este material</summary>
-        <p id="case-note"></p>
-      </details>
     </section>
-    <footer>
-      <p><strong>Prueba experimental.</strong> Los mapas son estimaciones artísticas y necesitan revisión. El probador permite observar su respuesta bajo una luz de estudio. Consulta los bits y canales reales bajo cada mapa antes de importarlo en tu motor 3D.</p>
-      <p>Las imágenes se muestran desde los archivos obtenidos, sin corrección, recorte ni reescalado guardado. El navegador ajusta su tamaño de visualización.</p>
-    </footer>
+    <section id="brand-landing" class="brand-landing" aria-label="Recursos de Arquinovatos" hidden><iframe id="brand-landing-frame" title="Recursos de Arquinovatos" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe></section>
     <noscript>Activa JavaScript para seleccionar el material y ver sus mapas.</noscript>
   </main>
+  <a id="brand-whatsapp" class="whatsapp-help" target="_blank" rel="noopener noreferrer" aria-label="Ayuda por WhatsApp" hidden><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 3.5A11.7 11.7 0 0 0 2 17.5L.5 23l5.6-1.5A11.7 11.7 0 0 0 20.5 3.5ZM12 21a9.5 9.5 0 0 1-4.9-1.3l-.4-.2-3.3.9.9-3.2-.2-.5A9.4 9.4 0 1 1 12 21Zm5.2-7.1c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1-.2.2-.3.2-.6.1-1.5-.7-2.5-1.5-3.5-3.1-.3-.5.3-.5.9-1.7.1-.2 0-.4 0-.6l-.9-2.1c-.2-.5-.5-.4-.7-.4h-.6c-.2 0-.5.1-.7.3-.7.8-1.1 1.7-1 2.7.2 2.7 2.5 5.4 5.3 6.6 1.8.8 3.2 1.1 4.4.6.6-.3 1.5-1.1 1.7-1.9.2-.8.2-1.4.1-1.5-.1-.2-.3-.3-.6-.4Z"/></svg></a>
   <dialog id="viewer" aria-labelledby="viewer-title">
     <div class="viewer-top"><h2 id="viewer-title"></h2><button id="close-viewer" type="button">Cerrar</button></div>
     <div class="viewer-image"><img id="large-image" alt=""></div>

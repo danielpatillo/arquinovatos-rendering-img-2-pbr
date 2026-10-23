@@ -14,6 +14,8 @@ Do not resolve uncertainty by returning a constant gray image. A uniform 128/255
 
 The variation must remain coherent and restrained—not random, exaggerated, or falsely presented as measured data.
 
+The baseline and ranges below are authoring guides, not measured acceptance targets. Do not turn S=0.50, byte128, or a coordinator's suggested constituent difference into a hard pass/fail rule. A different baseline within a plausible artistic interpretation may be accepted with its actual S/F0 values disclosed. Block only an independently observed semantic or material defect, such as glossiness/Metallic encoding, photographic highlights, pervasive pigment copying or visually unjustified extreme patchwork. A numerical difference from a suggested gray alone is a warning, not a reason for another generation.
+
 ## 2. Reference Hierarchy
 
 ### Image 1 — Master Albedo and UV Layout

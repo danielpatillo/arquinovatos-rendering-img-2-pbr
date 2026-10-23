@@ -12,6 +12,41 @@
     {key:'tiling',label:'Repetición UV',min:.25,max:12,step:.25,value:1,ratio:true}
   ];
   const defaults=()=>Object.fromEntries(controls.map(c=>[c.key,c.value]));
+  // PBR Studio: reflection-contrast-v2-protected, perfil roughness «approved».
+  const roughnessVariants=[{id:'original',label:'Original'},{id:'r01',label:'Contraste 1',strength:1.05,target:.80},{id:'r02',label:'Contraste 2',strength:2.2,target:.50},{id:'r03',label:'Contraste 3',strength:12,target:.20}];
+  // Specular vigente: perfil separated-v1, independiente del ancla roughness.
+  const specularVariants=[{id:'original',label:'Original'},{id:'s01',label:'Contraste 1',strength:1.05,gamma:.60,floor:.03,peak:.10},{id:'s02',label:'Contraste 2',strength:2.2,gamma:.90,floor:.23,peak:.46},{id:'s03',label:'Contraste 3',strength:12,gamma:1.35,floor:.66,peak:.97}];
+  const roundEven=x=>{const lo=Math.floor(x),fraction=x-lo;return fraction===.5?(lo%2?lo+1:lo):Math.round(x);};
+  function roughnessLUT(hist,id){
+    const variant=roughnessVariants.find(v=>v.id===id);if(!variant)throw Error('Contraste roughness desconocido');
+    if(id==='original')return Uint8Array.from({length:256},(_,i)=>i);
+    if(hist.length!==256||hist.some(n=>!Number.isFinite(n)||n<0))throw Error('Histograma roughness inválido');
+    const total=hist.reduce((sum,n)=>sum+n,0),occupied=Array.from(hist.keys()).filter(i=>hist[i]>0);
+    if(!total||occupied.at(-1)-occupied[0]<=2)return null;
+    const low=occupied[0],high=occupied.at(-1);let count=0,mid=0;
+    for(;mid<256;mid++){count+=hist[mid];if(count>=Math.max(1,total*.5))break;}
+    const median=(mid-low)/(high-low),{strength,target}=variant;
+    return Uint8Array.from({length:256},(_,x)=>{
+      const u=Math.max(0,Math.min(1,(x-low)/(high-low)));let curved;
+      if(u<=median&&median>0)curved=target*Math.pow(u/median,strength);
+      else if(median<1)curved=1-(1-target)*Math.pow((1-u)/(1-median),strength);
+      else curved=target*Math.pow(u,strength);
+      return roundEven(255*(.03+.94*(.10*u+.90*curved)));
+    });
+  }
+  function specularLUT(hist,id){
+    const variant=specularVariants.find(v=>v.id===id);if(!variant)throw Error('Contraste Specular desconocido');
+    if(id==='original')return Uint8Array.from({length:256},(_,i)=>i);
+    if(hist.length!==256||hist.some(n=>!Number.isFinite(n)||n<0))throw Error('Histograma Specular inválido');
+    const occupied=Array.from(hist.keys()).filter(i=>hist[i]>0);if(!occupied.length||occupied.at(-1)-occupied[0]<=2)return null;
+    const low=occupied[0],high=occupied.at(-1),{strength,gamma,floor,peak}=variant;
+    return Uint8Array.from({length:256},(_,x)=>{
+      const u=Math.pow(Math.max(0,Math.min(1,(x-low)/(high-low))),gamma);
+      const curved=u<=.5?.5*Math.pow(2*u,strength):1-.5*Math.pow(2*(1-u),strength);
+      const protectedValue=roundEven(255*(.03+.94*(.10*u+.90*curved)));
+      return roundEven(255*(floor+(protectedValue/255-.03)*(peak-floor)/.94));
+    });
+  }
   function uniforms(input={}){
     const p={};for(const c of controls){const v=Number(input[c.key]??c.value);p[c.key]=Number.isFinite(v)?Math.max(c.min,Math.min(c.max,v)):c.value;}
     const curve=(gain,contrast,scale=1)=>[gain*contrast*scale,(gain*.5*(1-contrast)*scale)||0];
@@ -47,5 +82,5 @@
     }
     return {vertices:new Float32Array(vertices),indices:new Uint16Array(indices)};
   }
-  return {controls,defaults,uniforms,sphereGeometry,previewGeometry};
+  return {controls,defaults,uniforms,sphereGeometry,previewGeometry,roughnessVariants,roughnessLUT,specularVariants,specularLUT};
 });
