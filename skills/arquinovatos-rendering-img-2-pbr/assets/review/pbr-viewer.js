@@ -107,7 +107,7 @@
             canvas.getContext('2d').putImageData(pixels,0,0);sources[variant.id]=canvas;
           }
         }
-        this.ready=true;this.status.textContent=this.vertexHeight?'Arrastra para girar. También puedes usar las flechas.':'Arrastra para girar. La altura se muestra como relieve de superficie en este equipo.';this.schedule();
+        this.ready=true;this.status.textContent='';this.schedule();
       }catch(error){if(epoch===this.epoch)this.status.textContent=error.message;}
     }
     setVariant(key,id){
@@ -163,7 +163,7 @@
     let loadEpoch=0;return {load:async item=>{
       const epoch=++loadEpoch;for(const row of variantUI){row.select.disabled=true;row.download.disabled=true;row.select.value='original';}
       await preview.load(item);if(epoch!==loadEpoch)return;
-      for(const row of variantUI){const sources=preview[row.channel.key+'Sources'];for(const option of row.select.options)option.disabled=!sources?.[option.value];row.select.disabled=!preview.ready;row.download.disabled=!preview.ready;row.note.textContent=!preview.ready?'Vista no disponible.':sources?.[row.channel.variants[1].id]?'Original y tres contrastes.':'Mapa uniforme: solo Original.';}
+      for(const row of variantUI){const sources=preview[row.channel.key+'Sources'];for(const option of row.select.options)option.disabled=!sources?.[option.value];row.select.disabled=!preview.ready;row.download.disabled=!preview.ready;row.note.textContent=!preview.ready?'Vista no disponible.':sources?.[row.channel.variants[1].id]?'':'Mapa uniforme: solo Original.';}
     }};
   };
 })();

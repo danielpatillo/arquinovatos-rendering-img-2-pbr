@@ -78,7 +78,7 @@ export function buildReview(options,{variantExporter=exportVariants}={}){
     return {filename,label,description,src:dataURL(file),format:'8 bits, '+(channels===3?'RGB':'gris')+'.',prompt};
   });
   const photoData=dataURL(photo);
-  const cases=[{id:'01',name:options.name||'Material PBR',zone:options.zone||'Material seleccionado en la fotografía original.',photo:photoData,width,height,note:options.note||'Estimación artística. Revisa continuidad, registro y respuesta física antes de usar el material en producción.',maps:entries}];
+  const cases=[{id:'01',name:options.name||'Material PBR',zone:options.zone||'',photo:photoData,width,height,maps:entries}];
   let html=fs.readFileSync(path.join(assets,'index.html'),'utf8');
   for(const logo of ['logo-dark.png','logo-light.png'])html=html.replace('src="'+logo+'"',()=> 'src="'+dataURL(path.join(assets,logo))+'"');
   html=html.replace('<link rel="stylesheet" href="styles.css">',()=>'<style>\n'+fs.readFileSync(path.join(assets,'styles.css'),'utf8')+'\n</style>');
