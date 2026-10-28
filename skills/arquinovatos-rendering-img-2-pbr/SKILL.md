@@ -6,6 +6,8 @@ description: >-
   copiables e historial local de materiales. Usa el generador integrado de Codex y subagentes: corrige el albedo
   en bucle hasta aprobarlo y continúa con cinco derivados en paralelo.
   Para superficies opacas no metálicas.
+metadata:
+  version: "1.6.1"
 ---
 
 # Arquinovatos - Rendering IMG 2 PBR
@@ -20,7 +22,13 @@ La revisión es **práctica y proporcional**: acepta el Normal origen en DX **o*
 
 Con una foto adjunta basta: **«Con la skill https://arquinovatos.com/PBR2IMG dame el material de [superficie]»**. También funciona `https://arquinovatos.com/IMG2PBR`; ambas rutas redirigen a esta skill en GitHub, y admite su enlace directo. No hagas que el usuario copie un procedimiento de instalación, requisitos, delegación o revisión en su mensaje.
 
-La petición de usar la skill desde su enlace incluye cargar su `SKILL.md`, instalarla o actualizarla en la ubicación personal que admita el agente y usarla en este mismo encargo. Resuelve el enlace y conserva la carpeta completa de instrucciones, scripts y plantilla; compara la versión pública antes de reemplazar una instalación existente y respeta cambios locales del usuario. No sobrescribas resultados anteriores. Instalar no añade capacidades ausentes: comprueba las del entorno y continúa con las disponibles según esta skill. La instalación no requiere que el usuario vuelva a pegar la solicitud larga.
+**Usa primero la copia local instalada.** Si el catálogo del agente ya proporciona la ruta de esta skill, carga ese `SKILL.md` y continúa; no repitas su búsqueda. Si no conoces la ruta, comprueba directamente `skills/arquinovatos-rendering-img-2-pbr/SKILL.md` en la ubicación personal configurada del agente (`$CODEX_HOME/skills` o `~/.codex/skills` en Codex). Evita recorrer el disco, enumerar skills remotas o comparar con GitHub para decidir si puedes usarla.
+
+- **Ya está instalada:** reutiliza sus instrucciones, scripts y plantilla. Repetir el enlace, pedir otro material o decir «instala/descarga la skill» no actualiza por sí solo una copia existente. No consultes versiones remotas, hagas `git fetch/pull`, descargues ZIP ni reinstales en cada generación o chat nuevo.
+- **No está instalada:** el encargo de usarla desde su enlace incluye instalarla una vez y utilizarla en ese mismo encargo. Resuelve el enlace solo en este caso, conserva la carpeta completa y continúa sin exigir que se repita el prompt. Una instalación existente que no puedes leer o ejecutar se informa como un problema concreto, sin borrarla ni reemplazarla automáticamente.
+- **Actualización expresa:** «actualiza la skill», «usa la última versión» o «haz git pull» sí autorizan consultar y actualizar su distribución. Si la instalación pertenece a un checkout Git de este repositorio, verifica su raíz y remoto antes de `git pull --ff-only`; no ejecutes el pull sobre otro repositorio padre del usuario. Si fue instalada descargando archivos, actualízala mediante el instalador o una descarga temporal, conservando cambios locales. No elimines ni muevas la biblioteca, materiales o resultados al actualizarla.
+
+El historial vive fuera de la instalación y se comparte entre todos los chats del mismo usuario en esa computadora. Instalar no añade capacidades ausentes; comprueba las del entorno según el encargo. No sobrescribas resultados anteriores ni pidas descargar otra vez como requisito para un material nuevo.
 
 ## Capacidades necesarias
 
@@ -121,7 +129,7 @@ Registra cada resultado final según [library.md](references/library.md): despu�
 
 ## 6. Construir el visor automáticamente después de los resultados finales
 
-Después de aprobar y entregar los PNG finales, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. No vuelvas a preguntar por el HTML. Usa la plantilla de `assets/review/`, descargada con la skill desde GitHub: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, trece PNG y los dos logos incrustados sin modificar los originales. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
+Después de aprobar y entregar los PNG finales, lee [references/review.md](references/review.md) y ejecuta el constructor sobre los archivos ya aceptados. No vuelvas a preguntar por el HTML. Usa la plantilla de `assets/review/` de la copia instalada: **no escribas otro HTML/CSS/JS, no rediseñes ni vuelvas a generar imágenes**. Produce `Material_PBR.html` con la foto, trece PNG y los dos logos incrustados sin modificar los originales. Conserva las tres formas, tiling UV, inversión Y, intensidades por mapa, contrastes, temas, galería, menú contextual y prompts copiables.
 
 Los selectores de **Roughness y Specular** incluyen Original y Contraste 1/2/3, con las recetas correspondientes de PBR Studio. Permiten probar y descargar cada variante a resolución completa; no requieren otras generaciones de IA. Los deslizadores siguen ajustando solo la vista previa. **Abrir carpeta de mapas** abre el directorio real con todos los originales y variantes.
 

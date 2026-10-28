@@ -140,3 +140,36 @@ test('importing only a supplied output tree indexes existing viewers without cop
   importMaterials({library:root,from:source});assert.equal(readLibrary(root).materials.length,2);assert.equal(digest(path.join(a.maps,names[0])),original);assert.equal(digest(a.output),html);
   assert.ok(fs.existsSync(b.output));assert.equal(fs.existsSync(path.join(root,'Piedra')),false);
 });
+
+test('refreshing the catalogue rebuilds access to all materials without rewriting their records or maps',()=>{
+  const {registerMaterial,readLibrary,refreshLibrary}=api();assert.equal(typeof refreshLibrary,'function','A catalogue refresh must not require re-registering materials');
+  const root=path.join(run,'refresh-existing'),a=legacy('refresh-a'),b=legacy('refresh-b');
+  registerMaterial({library:root,root:a.root,name:'Anterior',status:'ready'});registerMaterial({library:root,root:b.root,name:'Nuevo',status:'ready'});
+  const entries=readLibrary(root).materials,before=entries.map(e=>fs.readFileSync(path.join(root,'.historial',e.id+'.json'))),original=digest(path.join(a.maps,names[0]));
+  fs.writeFileSync(path.join(root,'Biblioteca_PBR.html'),'outdated catalogue');const result=refreshLibrary({library:root});
+  assert.equal(result.materials,2);const data=JSON.parse(fs.readFileSync(result.index,'utf8').match(/window\.PBR_LIBRARY = (.+);\n/)[1]);assert.equal(data.length,2);
+  for(const [i,entry] of entries.entries())assert.deepEqual(fs.readFileSync(path.join(root,'.historial',entry.id+'.json')),before[i]);assert.equal(digest(path.join(a.maps,names[0])),original);
+});
+
+test('saved catalogues with Windows or Unix newlines show the registered history instead of an empty template',()=>{
+  const {registerMaterial,libraryPage}=api(),root=path.join(run,'line-endings'),material=legacy('line-endings-case');
+  registerMaterial({library:root,root:material.root,name:'Material conservado',status:'ready'});
+  const file=path.join(root,'Biblioteca_PBR.html'),original=fs.readFileSync(file,'utf8');
+  for(const newline of ['\n','\r\n']){
+    const template=original.replace(/\r?\n/g,'\n').replace(/window\.PBR_LIBRARY = .*;\n/,'window.PBR_LIBRARY = [];\n').replace(/\n/g,newline);
+    fs.writeFileSync(file,template);const rendered=libraryPage(root,{baseUrl:'http://127.0.0.1:50001'}),match=rendered.match(/window\.PBR_LIBRARY = (.+);\r?\n/);
+    assert.ok(match);assert.equal(JSON.parse(match[1]).length,1);assert.equal(JSON.parse(match[1])[0].name,'Material conservado');
+  }
+});
+
+test('separate chats using different working folders append to the same library while a previously opened server sees both',async()=>{
+  const {registerMaterial,readLibrary}=api(),root=path.join(run,'cross-chat'),a=legacy('chat-old'),b=legacy('chat-new');
+  registerMaterial({library:root,root:a.root,name:'Chat anterior',status:'ready'});
+  const local=await servers.createLibraryServer({libraryRoot:root,folderOpener:()=>{},revealer:()=>{}});
+  try{
+    assert.equal((await (await fetch(local.origin+'/api/library')).json()).materials.length,1);
+    const cwd=path.join(run,'another-chat-workspace');fs.mkdirSync(cwd);
+    await new Promise((resolve,reject)=>{const child=spawn(process.execPath,[fileURLToPath(moduleUrl),'register','--library',root,'--material',b.root,'--name','Chat nuevo','--status','ready'],{cwd,stdio:['ignore','ignore','pipe'],windowsHide:true});let error='';child.stderr.on('data',s=>error+=s);child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(Error(error)));});
+    const current=await (await fetch(local.origin+'/api/library')).json();assert.equal(current.materials.length,2);assert.deepEqual(new Set(current.materials.map(e=>e.name)),new Set(['Chat anterior','Chat nuevo']));assert.equal(readLibrary(root).materials.length,2);
+  }finally{await stop(local);}
+});

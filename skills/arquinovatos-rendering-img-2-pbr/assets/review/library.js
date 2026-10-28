@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $=id=>document.getElementById(id),bridge=window.PBR_LOCAL_BRIDGE;
-  let materials=Array.isArray(window.PBR_LIBRARY)?window.PBR_LIBRARY:[];
+  let materials=Array.isArray(window.PBR_LIBRARY)?window.PBR_LIBRARY:[],refreshing=null;
   function reflectTheme(){const dark=document.documentElement.dataset.theme==='dark';$('theme-toggle').textContent=dark?'Tema claro':'Tema oscuro';}
   reflectTheme();$('theme-toggle').addEventListener('click',()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('arquinovatos-pbr-theme',document.documentElement.dataset.theme);}catch{}reflectTheme();});
   const statusLabels={'ready':'Visor listo','png-only':'Solo PNG','viewer-pending':'Visor pendiente','viewer-error':'Visor pendiente'};
@@ -27,15 +27,27 @@
       article.append(preview,title,detail,state,actions);$('library-grid').append(article);
     }
   }
-  async function refresh(){
-    if(!bridge){location.reload();return;}
+  function refresh({manual=false}={}){
+    if(!bridge){if(manual)location.reload();return;}
+    if(refreshing)return refreshing;
     const button=$('refresh-library');button.disabled=true;
-    try{const response=await fetch(bridge.origin+'/api/library',{cache:'no-store'});if(!response.ok)throw Error('No se pudo actualizar el historial. Vuelve a iniciar la biblioteca.');const data=await response.json();materials=data.materials;showWarnings(data.warnings);render();$('library-status').textContent='Historial actualizado.';}
-    catch(error){$('library-status').textContent=error.message;}finally{button.disabled=false;}
+    refreshing=(async()=>{
+      try{
+        const response=await fetch(bridge.origin+'/api/library',{cache:'no-store'});if(!response.ok)throw Error('No se pudo actualizar el historial. Vuelve a iniciar la biblioteca.');const data=await response.json();
+        if(!Array.isArray(data.materials)||!data.materials.every(item=>item&&typeof item.id==='string'&&typeof item.name==='string'))throw Error('El historial recibido no es válido. Se conserva la lista anterior.');
+        if(JSON.stringify(data.materials)!==JSON.stringify(materials)){materials=data.materials;render();}
+        showWarnings(data.warnings);if(manual)$('library-status').textContent='Historial actualizado.';
+      }catch(error){$('library-status').textContent=error.message;}
+    })().finally(()=>{refreshing=null;button.disabled=false;});
+    return refreshing;
   }
   function showWarnings(count){$('library-warning').hidden=!count;$('library-warning').textContent=count?'Hay registros que no se pudieron leer. Sus archivos se conservan; pide a Codex recuperar el historial.':'';}
   $('open-library').disabled=!bridge;$('open-library').addEventListener('click',()=>folder('/api/open-library',{},$('open-library')));
   if(!bridge)$('library-status').textContent='Para abrir carpetas, pide a Codex abrir tu biblioteca o ejecuta node Iniciar_biblioteca.mjs en esta carpeta.';
-  $('library-search').addEventListener('input',render);$('refresh-library').addEventListener('click',refresh);showWarnings(window.PBR_LIBRARY_WARNINGS);render();
-  window.addEventListener('focus',()=>{if(bridge)refresh();});
+  $('library-search').addEventListener('input',render);$('refresh-library').addEventListener('click',()=>refresh({manual:true}));showWarnings(window.PBR_LIBRARY_WARNINGS);render();
+  if(bridge){
+    window.addEventListener('focus',()=>refresh());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')return refresh();});
+    window.setInterval(()=>{if(document.visibilityState==='visible')return refresh();},30000);
+  }
 })();

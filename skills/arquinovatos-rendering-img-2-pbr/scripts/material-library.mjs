@@ -75,7 +75,7 @@ export function libraryEntries(library,{baseUrl}={}){
 }
 function fillLibraryHTML(html,library,options){
   const data=libraryEntries(library,options);
-  return html.replace(/window\.PBR_LIBRARY = .*;\n/,()=> 'window.PBR_LIBRARY = '+inline(data.materials)+';\n').replace(/window\.PBR_LIBRARY_WARNINGS = .*;\n/,()=> 'window.PBR_LIBRARY_WARNINGS = '+data.warnings+';\n');
+  return html.replace(/window\.PBR_LIBRARY = .*;\r?\n/,()=> 'window.PBR_LIBRARY = '+inline(data.materials)+';\n').replace(/window\.PBR_LIBRARY_WARNINGS = .*;\r?\n/,()=> 'window.PBR_LIBRARY_WARNINGS = '+data.warnings+';\n');
 }
 function buildLibraryHTML(library){
   const assets=path.resolve(ownFolder,'../assets/review');let html=fs.readFileSync(path.join(assets,'library.html'),'utf8');
@@ -85,6 +85,18 @@ function buildLibraryHTML(library){
   return fillLibraryHTML(html,library);
 }
 export function libraryPage(library,options){return fillLibraryHTML(fs.readFileSync(path.join(library,'Biblioteca_PBR.html'),'utf8'),library,options);}
+
+function writeCatalogue(library){
+  atomicWrite(path.join(library,'Biblioteca_PBR.html'),buildLibraryHTML(library));
+  for(const [source,destination] of [['serve-review.mjs','Iniciar_biblioteca.mjs'],['material-library.mjs','material-library.mjs']]){
+    const from=path.join(ownFolder,source),to=path.join(library,destination);if(!same(from,to))atomicWrite(to,fs.readFileSync(from));
+  }
+  return {library,index:path.join(library,'Biblioteca_PBR.html'),launcher:path.join(library,'Iniciar_biblioteca.mjs')};
+}
+export function refreshLibrary({library}={}){
+  const root=prepareRoot(library);
+  return withLock(root,()=>{const result=writeCatalogue(root),history=readLibrary(root);return {...result,materials:history.materials.length,warnings:history.warnings.length};});
+}
 
 export function registerMaterial({library,root,name='Material PBR',html,status='ready'}={}){
   if(!root)throw Error('Falta la carpeta del material.');
@@ -103,11 +115,7 @@ export function registerMaterial({library,root,name='Material PBR',html,status='
     resolveRecord(libraryRoot,record);
     // One atomic record per material prevents concurrent jobs from losing history.
     atomicWrite(file,JSON.stringify(record,null,2)+'\n');
-    atomicWrite(path.join(libraryRoot,'Biblioteca_PBR.html'),buildLibraryHTML(libraryRoot));
-    for(const [source,destination] of [['serve-review.mjs','Iniciar_biblioteca.mjs'],['material-library.mjs','material-library.mjs']]){
-      const from=path.join(ownFolder,source),to=path.join(libraryRoot,destination);if(!same(from,to))atomicWrite(to,fs.readFileSync(from));
-    }
-    return {...record,library:libraryRoot,index:path.join(libraryRoot,'Biblioteca_PBR.html'),launcher:path.join(libraryRoot,'Iniciar_biblioteca.mjs'),registered:true};
+    return {...record,...writeCatalogue(libraryRoot),registered:true};
   });
 }
 
@@ -135,8 +143,9 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
     if(command==='new')result=allocateMaterial(options);
     else if(command==='register')result=registerMaterial({...options,root:options.material});
     else if(command==='import')result=importMaterials(options);
+    else if(command==='refresh')result=refreshLibrary(options);
     else if(command==='list')result={library:path.resolve(options.library||defaultLibraryRoot()),...readLibrary(options.library)};
-    else throw Error('Usa new, register, import o list. --library es opcional.');
+    else throw Error('Usa new, register, import, refresh o list. --library es opcional.');
     console.log(JSON.stringify(result));
   }catch(error){console.error(error.message);process.exitCode=1;}
 }

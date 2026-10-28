@@ -4,9 +4,11 @@ Adjunta una foto e indica la superficie. Pídelo así:
 
 > Con la skill https://arquinovatos.com/PBR2IMG dame el material de este plafón.
 
-También puedes usar el [enlace directo de GitHub](https://github.com/danielpatillo/arquinovatos-rendering-img-2-pbr/tree/main/skills/arquinovatos-rendering-img-2-pbr). La petición incluye cargar, instalar o actualizar la skill y usarla en esa conversación. Las instrucciones completas están en [SKILL.md](skills/arquinovatos-rendering-img-2-pbr/SKILL.md); no necesitas pegarlas en el chat.
+También puedes usar el [enlace directo de GitHub](https://github.com/danielpatillo/arquinovatos-rendering-img-2-pbr/tree/main/skills/arquinovatos-rendering-img-2-pbr). Si ya tienes la skill, se reutiliza la copia local; si falta, se instala una vez y se usa en esa conversación. Repetir el enlace no vuelve a descargarla ni consulta si hay versiones nuevas. Las instrucciones completas están en [SKILL.md](skills/arquinovatos-rendering-img-2-pbr/SKILL.md); no necesitas pegarlas en el chat.
 
 [arquinovatos.com/IMG2PBR](https://arquinovatos.com/IMG2PBR) lleva a la misma skill.
+
+Para actualizarla, pídelo expresamente: **«Actualiza la skill Arquinovatos IMG 2 PBR a la última versión»**. En una instalación Git corresponde a `git pull --ff-only` sobre ese repositorio; una instalación por descarga se actualiza conservando los cambios locales. Tus materiales e historial permanecen en su carpeta independiente.
 
 ## Qué recibes
 
@@ -30,9 +32,11 @@ Los PNG se guardan directamente en maps/. El resultado incluye Material_PBR.html
 
 ## Historial de materiales
 
-La biblioteca se guarda en `Arquinovatos/Materiales_PBR` dentro de tu carpeta personal. Cada material nuevo tiene su propia carpeta; un destino que indiques expresamente se respeta. El catálogo `Biblioteca_PBR.html` guarda el acceso a tus resultados y permite buscar y volver a abrir cada visor en cualquier momento, incluso después de actualizar la skill o cerrar Codex.
+La biblioteca se guarda en `Arquinovatos/Materiales_PBR` dentro de tu carpeta personal y es la misma para todos tus chats y ejecuciones en esa computadora. Cada material nuevo tiene su propia carpeta; un destino que indiques expresamente se respeta y se indexa en el historial común. El catálogo `Biblioteca_PBR.html` acumula los resultados anteriores y nuevos y permite buscar y volver a abrir cada visor, incluso después de actualizar la skill o cerrar Codex.
 
 Pide **«Abre mi biblioteca de materiales Arquinovatos»**. Para usar las acciones de carpeta, Codex inicia `node Iniciar_biblioteca.mjs` desde la biblioteca y abre su dirección local. Tienes **Abrir carpeta de este material** y **Abrir carpeta de todos los materiales**, además de la carpeta de mapas. Si cierras el servidor, basta con volver a ejecutar el iniciador; los archivos y el historial permanecen guardados.
+
+La lista incorpora nuevos materiales automáticamente mientras está abierta con el acompañante local: se revisa cada 30 segundos y al volver a la pestaña. Si necesitas reconstruir el catálogo sin tocar los materiales, el helper `material-library.mjs refresh` lo recupera desde los registros guardados.
 
 Los materiales anteriores se pueden importar desde una carpeta de resultados conocida: Codex los indexa sin mover, copiar ni regenerar sus mapas. Permanecen en su ubicación original y su ficha abre esa carpeta. Los materiales sin visor o cuyas carpetas ya no están disponibles conservan su registro con el estado correspondiente. Más detalles en [library.md](skills/arquinovatos-rendering-img-2-pbr/references/library.md).
 
